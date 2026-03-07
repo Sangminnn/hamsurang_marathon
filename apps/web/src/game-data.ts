@@ -1,27 +1,5 @@
 export type CharacterId = "surangi" | "turtle";
-export type SkinId =
-  | "surangi-classic"
-  | "surangi-detective"
-  | "surangi-rainbow"
-  | "surangi-mechanic"
-  | "surangi-sun"
-  | "surangi-skater"
-  | "surangi-explorer"
-  | "surangi-farmer"
-  | "surangi-diver"
-  | "surangi-blossom"
-  | "surangi-headset"
-  | "surangi-dj"
-  | "surangi-chef"
-  | "surangi-astronaut"
-  | "surangi-runner"
-  | "surangi-winter"
-  | "surangi-pilot"
-  | "surangi-banker"
-  | "surangi-cadet"
-  | "turtle-classic"
-  | "turtle-coder"
-  | "turtle-sprint";
+export type SkinId = string;
 export type HatId = "none" | "cap" | "crown" | "leaf" | "visor";
 export type TrailId = "mint" | "spark" | "flame" | "petal";
 
@@ -349,43 +327,323 @@ export const SKINS: Array<{
   {
     id: "turtle-classic",
     characterId: "turtle",
-    label: "거북이 기본",
-    subtitle: "기본 러너 포즈",
+    label: "해커 거북이",
+    subtitle: "멀티 모니터 앞에 앉은 메인 거북이",
     price: 0,
     tint: 0xffffff,
     accentColor: "#8ea99b",
     badge: "기본",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/hamsurang_turtle.png",
+      imagePath: "/assets/characters/turtle_roster/turtle-hacker.png",
     },
   },
   {
     id: "turtle-coder",
     characterId: "turtle",
-    label: "코더 거북이",
-    subtitle: "노트북 러너 콘셉트",
+    label: "분석가 거북이",
+    subtitle: "투명 테이블에서 데이터를 다루는 전략형 거북이",
     price: 190,
-    tint: 0xdcecff,
-    accentColor: "#6b9ac4",
+    tint: 0xffffff,
+    accentColor: "#7db486",
     badge: "시그니처",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/hamsurang_turtle.png",
+      imagePath: "/assets/characters/turtle_roster/turtle-analyst.png",
     },
   },
   {
     id: "turtle-sprint",
     characterId: "turtle",
-    label: "스프린트 거북이",
-    subtitle: "트랙 위 경쟁형 컬러 베리에이션",
+    label: "스트리머 거북이",
+    subtitle: "키보드 세팅이 강조된 퍼포먼스형 거북이",
     price: 220,
-    tint: 0xe9f7d7,
-    accentColor: "#7ab648",
+    tint: 0xffffff,
+    accentColor: "#d56d5d",
     badge: "신규",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/hamsurang_turtle.png",
+      imagePath: "/assets/characters/turtle_roster/turtle-streamer.png",
+    },
+  },
+  {
+    id: "turtle-writer",
+    characterId: "turtle",
+    label: "작가 거북이",
+    subtitle: "깃펜과 책상이 돋보이는 집중형 거북이",
+    price: 180,
+    tint: 0xffffff,
+    accentColor: "#7d8f5b",
+    badge: "인기",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-writer.png",
+    },
+  },
+  {
+    id: "turtle-accountant",
+    characterId: "turtle",
+    label: "정산 거북이",
+    subtitle: "계산기와 영수증을 챙긴 재무형 거북이",
+    price: 170,
+    tint: 0xffffff,
+    accentColor: "#d0a33b",
+    badge: "희귀",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-accountant.png",
+    },
+  },
+  {
+    id: "turtle-filmmaker",
+    characterId: "turtle",
+    label: "필름메이커 거북이",
+    subtitle: "카메라 리그를 다루는 제작형 거북이",
+    price: 200,
+    tint: 0xffffff,
+    accentColor: "#8c63c9",
+    badge: "신규",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-filmmaker.png",
+    },
+  },
+  {
+    id: "turtle-graffiti",
+    characterId: "turtle",
+    label: "그래피티 거북이",
+    subtitle: "벽화와 스프레이 콘셉트의 스트릿 거북이",
+    price: 195,
+    tint: 0xffffff,
+    accentColor: "#59b9b5",
+    badge: "인기",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-graffiti.png",
+    },
+  },
+  {
+    id: "turtle-dj",
+    characterId: "turtle",
+    label: "DJ 거북이",
+    subtitle: "콘솔과 전화기 사이를 오가는 믹서형 거북이",
+    price: 230,
+    tint: 0xffffff,
+    accentColor: "#d78a3d",
+    badge: "시그니처",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-dj.png",
+    },
+  },
+  {
+    id: "turtle-spacewalk",
+    characterId: "turtle",
+    label: "우주유영 거북이",
+    subtitle: "동료와 함께 출격하는 우주 탐사 거북이",
+    price: 240,
+    tint: 0xffffff,
+    accentColor: "#b8bbc9",
+    badge: "전설",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-spacewalk.png",
+    },
+  },
+  {
+    id: "turtle-chef-white",
+    characterId: "turtle",
+    label: "화이트 셰프 거북이",
+    subtitle: "셰프 복장을 갖춘 주방형 거북이",
+    price: 185,
+    tint: 0xffffff,
+    accentColor: "#d2d2d2",
+    badge: "인기",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-chef-white.png",
+    },
+  },
+  {
+    id: "turtle-medalist",
+    characterId: "turtle",
+    label: "메달리스트 거북이",
+    subtitle: "수상 포즈가 강조된 챔피언 거북이",
+    price: 210,
+    tint: 0xffffff,
+    accentColor: "#d3af39",
+    badge: "희귀",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-medalist.png",
+    },
+  },
+  {
+    id: "turtle-firefighter",
+    characterId: "turtle",
+    label: "소방관 거북이",
+    subtitle: "호스를 든 현장형 거북이",
+    price: 205,
+    tint: 0xffffff,
+    accentColor: "#d55a3e",
+    badge: "신규",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-firefighter.png",
+    },
+  },
+  {
+    id: "turtle-diver",
+    characterId: "turtle",
+    label: "다이버 거북이",
+    subtitle: "잠수복과 장비가 완성된 심해 거북이",
+    price: 220,
+    tint: 0xffffff,
+    accentColor: "#d28a2a",
+    badge: "희귀",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-diver.png",
+    },
+  },
+  {
+    id: "turtle-rose-agent",
+    characterId: "turtle",
+    label: "로즈 에이전트 거북이",
+    subtitle: "장미와 마스크가 포인트인 미스터리 거북이",
+    price: 215,
+    tint: 0xffffff,
+    accentColor: "#5a5a5a",
+    badge: "희귀",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-rose-agent.png",
+    },
+  },
+  {
+    id: "turtle-gardener",
+    characterId: "turtle",
+    label: "가드너 거북이",
+    subtitle: "물뿌리개를 든 정원형 거북이",
+    price: 170,
+    tint: 0xffffff,
+    accentColor: "#79a85a",
+    badge: "인기",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-gardener.png",
+    },
+  },
+  {
+    id: "turtle-builder",
+    characterId: "turtle",
+    label: "빌더 거북이",
+    subtitle: "망치와 공구 벨트를 장착한 거북이",
+    price: 200,
+    tint: 0xffffff,
+    accentColor: "#58b4b4",
+    badge: "신규",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-builder.png",
+    },
+  },
+  {
+    id: "turtle-headset",
+    characterId: "turtle",
+    label: "헤드셋 거북이",
+    subtitle: "오퍼레이터 감성의 퍼포먼스 거북이",
+    price: 190,
+    tint: 0xffffff,
+    accentColor: "#8d6ac6",
+    badge: "인기",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-headset.png",
+    },
+  },
+  {
+    id: "turtle-scholar",
+    characterId: "turtle",
+    label: "학자 거북이",
+    subtitle: "책상과 깃펜이 어울리는 연구형 거북이",
+    price: 175,
+    tint: 0xffffff,
+    accentColor: "#7d7b61",
+    badge: "희귀",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-scholar.png",
+    },
+  },
+  {
+    id: "turtle-architect",
+    characterId: "turtle",
+    label: "설계사 거북이",
+    subtitle: "블록 설계를 하는 전략형 거북이",
+    price: 180,
+    tint: 0xffffff,
+    accentColor: "#7da85f",
+    badge: "인기",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-architect.png",
+    },
+  },
+  {
+    id: "turtle-astronaut",
+    characterId: "turtle",
+    label: "우주비행사 거북이",
+    subtitle: "화이트 수트 버전의 솔로 우주 거북이",
+    price: 235,
+    tint: 0xffffff,
+    accentColor: "#c0c8d9",
+    badge: "전설",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-astronaut.png",
+    },
+  },
+  {
+    id: "turtle-chef-green",
+    characterId: "turtle",
+    label: "그린 셰프 거북이",
+    subtitle: "숟가락을 든 셰프 콘셉트 거북이",
+    price: 180,
+    tint: 0xffffff,
+    accentColor: "#87a860",
+    badge: "인기",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-chef-green.png",
+    },
+  },
+  {
+    id: "turtle-arcade",
+    characterId: "turtle",
+    label: "아케이드 거북이",
+    subtitle: "게임기 앞에 선 플레이어 거북이",
+    price: 205,
+    tint: 0xffffff,
+    accentColor: "#5c8fc7",
+    badge: "시그니처",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-arcade.png",
+    },
+  },
+  {
+    id: "turtle-painter",
+    characterId: "turtle",
+    label: "페인터 거북이",
+    subtitle: "앞치마와 베레모가 포인트인 아티스트 거북이",
+    price: 185,
+    tint: 0xffffff,
+    accentColor: "#78a764",
+    badge: "신규",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/turtle_roster/turtle-painter.png",
     },
   },
 ];
