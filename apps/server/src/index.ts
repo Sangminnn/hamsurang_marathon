@@ -37,8 +37,10 @@ app.put("/api/profile/:playerId", async (request, response) => {
   const body = request.body as {
     preferredName?: string;
     coins?: number;
+    equippedSkin?: "surangi-classic" | "surangi-cheer" | "surangi-breeze" | "turtle-classic" | "turtle-coder" | "turtle-sprint";
     equippedHat?: "none" | "cap" | "crown" | "leaf" | "visor";
     equippedTrail?: "mint" | "spark" | "flame" | "petal";
+    unlockedSkins?: Array<"surangi-classic" | "surangi-cheer" | "surangi-breeze" | "turtle-classic" | "turtle-coder" | "turtle-sprint">;
     unlockedHats?: Array<"none" | "cap" | "crown" | "leaf" | "visor">;
     unlockedTrails?: Array<"mint" | "spark" | "flame" | "petal">;
   };
@@ -46,8 +48,10 @@ app.put("/api/profile/:playerId", async (request, response) => {
   const profile = await saveProfile(request.params.playerId, {
     preferredName: body.preferredName?.slice(0, 12) ?? "",
     coins: Math.max(0, Number(body.coins ?? 0)),
+    equippedSkin: body.equippedSkin ?? "surangi-classic",
     equippedHat: body.equippedHat ?? "cap",
     equippedTrail: body.equippedTrail ?? "mint",
+    unlockedSkins: Array.from(new Set(body.unlockedSkins ?? ["surangi-classic", "turtle-classic"])),
     unlockedHats: Array.from(new Set(body.unlockedHats ?? ["none", "cap"])),
     unlockedTrails: Array.from(new Set(body.unlockedTrails ?? ["mint"])),
   });

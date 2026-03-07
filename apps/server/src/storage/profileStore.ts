@@ -5,8 +5,10 @@ import path from "node:path";
 export type StoredProfile = {
   preferredName: string;
   coins: number;
+  equippedSkin: "surangi-classic" | "surangi-cheer" | "surangi-breeze" | "turtle-classic" | "turtle-coder" | "turtle-sprint";
   equippedHat: "none" | "cap" | "crown" | "leaf" | "visor";
   equippedTrail: "mint" | "spark" | "flame" | "petal";
+  unlockedSkins: Array<"surangi-classic" | "surangi-cheer" | "surangi-breeze" | "turtle-classic" | "turtle-coder" | "turtle-sprint">;
   unlockedHats: Array<"none" | "cap" | "crown" | "leaf" | "visor">;
   unlockedTrails: Array<"mint" | "spark" | "flame" | "petal">;
   updatedAt: string;
@@ -20,8 +22,10 @@ const PROFILE_PATH = path.join(DATA_DIR, "profiles.json");
 const DEFAULT_PROFILE: StoredProfile = {
   preferredName: "",
   coins: 180,
+  equippedSkin: "surangi-classic",
   equippedHat: "cap",
   equippedTrail: "mint",
+  unlockedSkins: ["surangi-classic", "turtle-classic"],
   unlockedHats: ["none", "cap"],
   unlockedTrails: ["mint"],
   updatedAt: new Date(0).toISOString(),

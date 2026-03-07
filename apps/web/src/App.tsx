@@ -7,13 +7,18 @@ import {
   CHARACTERS,
   DEFAULT_PROFILE,
   HATS,
+  SKINS,
   TRAILS,
+  getCharacterSkins,
+  getDefaultSkinForCharacter,
   getHatMeta,
   getRaceReward,
+  getSkinMeta,
   getTrailMeta,
   type CharacterId,
   type CosmeticProfile,
   type HatId,
+  type SkinId,
   type TrailId,
 } from "./game-data";
 
@@ -29,6 +34,7 @@ type PlayerSnapshot = {
   isReady: boolean;
   isConnected: boolean;
   characterId: CharacterId;
+  skinId: SkinId;
   hatId: HatId;
   trailId: TrailId;
   progress: number;
@@ -59,6 +65,7 @@ type RawPlayerLike = Partial<PlayerSnapshot> & {
   sessionId?: string;
   name?: string;
   characterId?: string;
+  skinId?: string;
   hatId?: string;
   trailId?: string;
 };
@@ -105,12 +112,19 @@ function normalizeHatId(value: string | undefined): HatId {
   return HATS.some((hat) => hat.id === value) ? (value as HatId) : "none";
 }
 
+function normalizeSkinId(value: string | undefined, fallbackCharacterId: CharacterId): SkinId {
+  return SKINS.some((skin) => skin.id === value)
+    ? (value as SkinId)
+    : getDefaultSkinForCharacter(fallbackCharacterId);
+}
+
 function normalizeTrailId(value: string | undefined): TrailId {
   return TRAILS.some((trail) => trail.id === value) ? (value as TrailId) : "mint";
 }
 
 function normalizePlayer(rawPlayer: RawPlayerLike, fallbackKey: string): PlayerSnapshot {
   const sessionId = rawPlayer.sessionId ?? "";
+  const characterId = normalizeCharacterId(rawPlayer.characterId);
 
   return {
     renderKey: sessionId || fallbackKey,
@@ -119,7 +133,8 @@ function normalizePlayer(rawPlayer: RawPlayerLike, fallbackKey: string): PlayerS
     isHost: rawPlayer.isHost ?? false,
     isReady: rawPlayer.isReady ?? false,
     isConnected: rawPlayer.isConnected ?? true,
-    characterId: normalizeCharacterId(rawPlayer.characterId),
+    characterId,
+    skinId: normalizeSkinId(rawPlayer.skinId, characterId),
     hatId: normalizeHatId(rawPlayer.hatId),
     trailId: normalizeTrailId(rawPlayer.trailId),
     progress: rawPlayer.progress ?? 0,
@@ -190,8 +205,12 @@ function loadProfile() {
     return {
       preferredName: parsed.preferredName ?? memoryProfile.preferredName,
       coins: parsed.coins ?? memoryProfile.coins,
+      equippedSkin: normalizeSkinId(parsed.equippedSkin, "surangi"),
       equippedHat: normalizeHatId(parsed.equippedHat),
       equippedTrail: normalizeTrailId(parsed.equippedTrail),
+      unlockedSkins: (parsed.unlockedSkins ?? memoryProfile.unlockedSkins).map((skinId) =>
+        normalizeSkinId(skinId, "surangi"),
+      ),
       unlockedHats: (parsed.unlockedHats ?? memoryProfile.unlockedHats).map(normalizeHatId),
       unlockedTrails: (parsed.unlockedTrails ?? memoryProfile.unlockedTrails).map(normalizeTrailId),
     };
@@ -259,7 +278,7 @@ export function App() {
   const [auth, setAuth] = useState(getSavedAuth);
   const [playerName, setPlayerName] = useState(() => getSavedAuth().nickname || loadProfile().preferredName);
   const [joinRoomId, setJoinRoomId] = useState("");
-  const [characterId, setCharacterId] = useState<CharacterId>("surangi");
+  const [characterId, setCharacterId] = useState<CharacterId>(() => getSkinMeta(loadProfile().equippedSkin).characterId);
   const [profile, setProfile] = useState<CosmeticProfile>(loadProfile);
   const [countdownLabel, setCountdownLabel] = useState("3s");
   const [raceLabel, setRaceLabel] = useState("30s");
@@ -300,14 +319,20 @@ export function App() {
           return;
         }
 
+        const normalizedEquippedSkin = normalizeSkinId(nextProfile.equippedSkin, "surangi");
         setProfile({
           preferredName: nextProfile.preferredName ?? "",
           coins: nextProfile.coins ?? DEFAULT_PROFILE.coins,
+          equippedSkin: normalizedEquippedSkin,
           equippedHat: normalizeHatId(nextProfile.equippedHat),
           equippedTrail: normalizeTrailId(nextProfile.equippedTrail),
+          unlockedSkins: (nextProfile.unlockedSkins ?? DEFAULT_PROFILE.unlockedSkins).map((skinId) =>
+            normalizeSkinId(skinId, "surangi"),
+          ),
           unlockedHats: (nextProfile.unlockedHats ?? DEFAULT_PROFILE.unlockedHats).map(normalizeHatId),
           unlockedTrails: (nextProfile.unlockedTrails ?? DEFAULT_PROFILE.unlockedTrails).map(normalizeTrailId),
         });
+        setCharacterId(getSkinMeta(normalizedEquippedSkin).characterId);
         setPlayerName(nextProfile.preferredName ?? "");
       } catch {
         // 서버 프로필이 없더라도 기본 프로필로 계속 진행한다.
@@ -448,10 +473,11 @@ export function App() {
     }
 
     roomRef.current.send("selectLoadout", {
+      skinId: profile.equippedSkin,
       hatId: profile.equippedHat,
       trailId: profile.equippedTrail,
     });
-  }, [profile.equippedHat, profile.equippedTrail, roomSnapshot?.phase]);
+  }, [profile.equippedHat, profile.equippedSkin, profile.equippedTrail, roomSnapshot?.phase]);
 
   async function loginWithNickname() {
     if (!playerName.trim()) {
@@ -557,6 +583,7 @@ export function App() {
 
       nextRoom.send("selectCharacter", { characterId });
       nextRoom.send("selectLoadout", {
+        skinId: profile.equippedSkin,
         hatId: profile.equippedHat,
         trailId: profile.equippedTrail,
       });
@@ -583,6 +610,21 @@ export function App() {
 
   function selectCharacter(nextCharacterId: CharacterId) {
     setCharacterId(nextCharacterId);
+    setProfile((current) => {
+      const nextDefaultSkin = getDefaultSkinForCharacter(nextCharacterId);
+      const nextSkin = getSkinMeta(current.equippedSkin).characterId === nextCharacterId
+        ? current.equippedSkin
+        : nextDefaultSkin;
+
+      return {
+        ...current,
+        preferredName: playerName.trim().slice(0, 12),
+        equippedSkin: nextSkin,
+        unlockedSkins: current.unlockedSkins.includes(nextDefaultSkin)
+          ? current.unlockedSkins
+          : [...current.unlockedSkins, nextDefaultSkin],
+      };
+    });
     roomRef.current?.send("selectCharacter", {
       characterId: nextCharacterId,
     });
@@ -659,6 +701,7 @@ export function App() {
 
         nextRoom.send("selectCharacter", { characterId });
         nextRoom.send("selectLoadout", {
+          skinId: profile.equippedSkin,
           hatId: profile.equippedHat,
           trailId: profile.equippedTrail,
         });
@@ -696,6 +739,38 @@ export function App() {
     });
   }
 
+  function unlockOrEquipSkin(skinId: SkinId) {
+    const skin = getSkinMeta(skinId);
+
+    setCharacterId(skin.characterId);
+    setProfile((current) => {
+      if (!current.unlockedSkins.includes(skinId)) {
+        if (current.coins < skin.price) {
+          setToast("코인이 부족합니다.");
+          return current;
+        }
+
+        return {
+          ...current,
+          preferredName: playerName.trim().slice(0, 12),
+          coins: current.coins - skin.price,
+          equippedSkin: skinId,
+          unlockedSkins: [...current.unlockedSkins, skinId],
+        };
+      }
+
+      return {
+        ...current,
+        preferredName: playerName.trim().slice(0, 12),
+        equippedSkin: skinId,
+      };
+    });
+
+    roomRef.current?.send("selectCharacter", {
+      characterId: skin.characterId,
+    });
+  }
+
   function unlockOrEquipTrail(trailId: TrailId) {
     const trail = getTrailMeta(trailId);
 
@@ -728,6 +803,9 @@ export function App() {
       ...player,
       isLocal: player.sessionId === roomRef.current?.sessionId,
     })) ?? [];
+  const selectedCharacterId = localPlayer?.characterId ?? characterId;
+  const selectedCharacterSkins = getCharacterSkins(selectedCharacterId);
+  const equippedSkinMeta = getSkinMeta(profile.equippedSkin);
 
   return (
     <main className="app-shell">
@@ -761,8 +839,8 @@ export function App() {
                 </article>
                 <article className="info-card">
                   <span className="info-card-label">성장 요소</span>
-                  <strong>코인으로 꾸미기 해금</strong>
-                  <p>순위 보상으로 모자와 트레일을 열고 바로 장착할 수 있습니다.</p>
+                  <strong>코인으로 스킨 해금</strong>
+                  <p>순위 보상으로 캐릭터 스킨, 모자, 트레일을 열고 바로 다음 레이스에 반영할 수 있습니다.</p>
                 </article>
               </div>
             </div>
@@ -773,9 +851,9 @@ export function App() {
                 <strong>{profile.coins}</strong>
               </article>
               <article className="wallet-card">
-                <span>현재 꾸미기</span>
+                <span>현재 출전 세팅</span>
                 <strong>
-                  {getHatMeta(profile.equippedHat).emoji} {getTrailMeta(profile.equippedTrail).emoji}
+                  {equippedSkinMeta.label}
                 </strong>
               </article>
             </div>
@@ -926,12 +1004,14 @@ export function App() {
                   <strong>{profile.coins}</strong>
                 </article>
                 <article className="wallet-card wallet-card-stat">
-                  <span>모자</span>
-                  <strong className="wallet-icon">{getHatMeta(profile.equippedHat).emoji}</strong>
+                  <span>장착 스킨</span>
+                  <strong>{equippedSkinMeta.badge}</strong>
                 </article>
                 <article className="wallet-card wallet-card-stat">
-                  <span>트레일</span>
-                  <strong className="wallet-icon">{getTrailMeta(profile.equippedTrail).emoji}</strong>
+                  <span>이펙트</span>
+                  <strong className="wallet-icon">
+                    {getHatMeta(profile.equippedHat).emoji} {getTrailMeta(profile.equippedTrail).emoji}
+                  </strong>
                 </article>
               </div>
 
@@ -966,7 +1046,7 @@ export function App() {
                   <div className="panel inset">
                     <div className="section-copy">
                       <p className="panel-title">내 캐릭터 세팅</p>
-                      <p>장착한 모자와 트레일은 다른 참가자 화면에도 함께 표시됩니다.</p>
+                      <p>선택 캐릭터에 맞는 스킨, 모자, 트레일을 준비하면 레이스 시작과 함께 다른 참가자에게 그대로 보입니다.</p>
                     </div>
                     <div className="character-grid">
                       {Object.entries(CHARACTERS).map(([key, value]) => (
@@ -985,6 +1065,45 @@ export function App() {
                     </div>
 
                     <div className="locker-grid">
+                      <div className="locker-column">
+                        <div className="section-copy">
+                          <p className="panel-title">캐릭터 스킨</p>
+                          <p>{CHARACTERS[selectedCharacterId].label} 전용 베리에이션을 해금하고 출전 스킨으로 장착하세요.</p>
+                        </div>
+                        <div className="cosmetic-list">
+                          {selectedCharacterSkins.map((skin) => {
+                            const unlocked = profile.unlockedSkins.includes(skin.id);
+                            const equipped = profile.equippedSkin === skin.id;
+
+                            return (
+                              <button
+                                key={skin.id}
+                                type="button"
+                                className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
+                                onClick={() => unlockOrEquipSkin(skin.id)}
+                              >
+                                <div className="cosmetic-copy cosmetic-copy-with-thumb">
+                                  <img
+                                    className="cosmetic-thumb"
+                                    src={CHARACTERS[skin.characterId].imagePath}
+                                    alt={skin.label}
+                                  />
+                                  <div>
+                                    <strong>
+                                      {skin.label} <span className="cosmetic-inline-badge">{skin.badge}</span>
+                                    </strong>
+                                    <p>{unlocked ? skin.subtitle : `${skin.price} 코인으로 ${skin.subtitle} 해금`}</p>
+                                  </div>
+                                </div>
+                                <span className="progress-pill">
+                                  {equipped ? "출전 중" : unlocked ? "장착" : `${skin.price}C`}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       <div className="locker-column">
                         <div className="section-copy">
                           <p className="panel-title">모자 꾸미기</p>
@@ -1076,7 +1195,9 @@ export function App() {
                               <span>{player.name}</span>
                             </strong>
                             <div className="player-meta">
-                              <span className="player-role">{CHARACTERS[player.characterId].label} · {player.isHost ? "방장" : "참가자"}</span>
+                              <span className="player-role">
+                                {getSkinMeta(player.skinId).label} · {player.isHost ? "방장" : "참가자"}
+                              </span>
                               <span className="player-loadout">
                                 {getHatMeta(player.hatId).emoji} {getTrailMeta(player.trailId).emoji}
                               </span>
@@ -1117,7 +1238,7 @@ export function App() {
                             <span>{player.name}</span>
                           </strong>
                           <span>
-                            {getHatMeta(player.hatId).emoji} {getTrailMeta(player.trailId).emoji}
+                            {getSkinMeta(player.skinId).badge} · {getHatMeta(player.hatId).emoji} {getTrailMeta(player.trailId).emoji}
                           </span>
                         </div>
                       </article>
@@ -1157,7 +1278,7 @@ export function App() {
                             <span>{player.place}위 · {player.name}</span>
                           </strong>
                           <p>
-                            {CHARACTERS[player.characterId].label} · {getHatMeta(player.hatId).emoji} ·{" "}
+                            {getSkinMeta(player.skinId).label} · {getHatMeta(player.hatId).emoji} ·{" "}
                             {getTrailMeta(player.trailId).emoji}
                           </p>
                         </div>

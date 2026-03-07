@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
 
-import { CHARACTERS, getHatMeta, getTrailMeta, type CharacterId, type HatId, type TrailId } from "../game-data";
+import { CHARACTERS, getHatMeta, getSkinMeta, getTrailMeta, type CharacterId, type HatId, type SkinId, type TrailId } from "../game-data";
 
 type RacePlayer = {
   renderKey: string;
   name: string;
   characterId: CharacterId;
+  skinId: SkinId;
   hatId: HatId;
   trailId: TrailId;
   progress: number;
@@ -70,6 +71,7 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
             const trailMeta = getTrailMeta(player.trailId);
             const hatMeta = getHatMeta(player.hatId);
             const charMeta = CHARACTERS[player.characterId];
+            const skinMeta = getSkinMeta(player.skinId);
             const runnerX = 42 + ((width - 96) * player.progress) / 100;
 
             this.add.rectangle(width / 2, laneTop + 30, width - 32, 64, 0xffffff, 0.96).setStrokeStyle(
@@ -84,7 +86,7 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
               fontStyle: "700",
             });
 
-            this.add.text(width - 138, laneTop, `${hatMeta.emoji} ${trailMeta.emoji}`, {
+            this.add.text(width - 196, laneTop, `${skinMeta.badge} · ${hatMeta.emoji} ${trailMeta.emoji}`, {
               color: "#527269",
               fontFamily: "Pretendard Variable, sans-serif",
               fontSize: "14px",
@@ -97,8 +99,9 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
             this.add.rectangle(42 + ((width - 120) * player.progress) / 2, laneTop + 38, ((width - 120) * player.progress) / 100, 14, trailMeta.color, 0.35)
               .setOrigin(0, 0.5);
 
-            this.add.circle(runnerX, laneTop + 38, 26, trailMeta.color, 0.18);
-            this.add.image(runnerX, laneTop + 34, charMeta.sceneKey).setDisplaySize(42, 42);
+            this.add.circle(runnerX, laneTop + 38, 28, skinMeta.tint, 0.22);
+            this.add.circle(runnerX, laneTop + 38, 20, trailMeta.color, 0.18);
+            this.add.image(runnerX, laneTop + 34, charMeta.sceneKey).setDisplaySize(42, 42).setTint(skinMeta.tint);
 
             if (player.place > 0) {
               this.add.text(width - 52, laneTop + 22, `${player.place}위`, {

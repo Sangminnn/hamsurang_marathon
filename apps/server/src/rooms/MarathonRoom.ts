@@ -71,13 +71,18 @@ export class MarathonRoom extends Room<MarathonRoomState> {
       "selectLoadout",
       (
         client,
-        payload: { hatId: "none" | "cap" | "crown" | "leaf" | "visor"; trailId: "mint" | "spark" | "flame" | "petal" },
+        payload: {
+          skinId: "surangi-classic" | "surangi-cheer" | "surangi-breeze" | "turtle-classic" | "turtle-coder" | "turtle-sprint";
+          hatId: "none" | "cap" | "crown" | "leaf" | "visor";
+          trailId: "mint" | "spark" | "flame" | "petal";
+        },
       ) => {
         const player = this.state.players.get(client.sessionId);
         if (!player || this.state.phase !== "lobby") {
           return;
         }
 
+        player.skinId = payload.skinId;
         player.hatId = payload.hatId;
         player.trailId = payload.trailId;
         this.syncRegistry();

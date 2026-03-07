@@ -510,6 +510,34 @@ button {
   min-width: 0;
 }
 
+.cosmetic-copy-with-thumb {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.cosmetic-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 8px 14px rgba(34, 74, 59, 0.08));
+}
+
+.cosmetic-inline-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #edf7f0;
+  color: #2d5f4b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
 .room-summary-copy strong,
 .room-browser-copy strong {
   font-size: 1rem;
@@ -622,6 +650,7 @@ button {
 .player-loadout {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 30px;
   padding: 0 10px;
   border-radius: 999px;
@@ -629,6 +658,7 @@ button {
   color: #47685e;
   font-size: 0.84rem;
   font-weight: 700;
+  text-align: center;
 }
 
 .player-loadout {
