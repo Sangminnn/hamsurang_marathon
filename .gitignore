@@ -11,3 +11,4 @@ coverage/
 .env.*.local
 
 apps/server/data/*.tmp
+apps/server/data/profiles.json
