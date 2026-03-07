@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { CHARACTERS, getHatMeta, getSkinMeta, getTrailMeta, type CharacterId, type HatId, type SkinId, type TrailId } from "../game-data";
+import { CHARACTERS, getHatMeta, getSkinMeta, getTrailMeta, type ArtSource, type CharacterId, type HatId, type SkinId, type TrailId } from "../game-data";
 
 type RacePlayer = {
   renderKey: string;
@@ -36,9 +36,19 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
         private current: SceneSnapshot = { players: [] };
 
         preload() {
-          Object.entries(CHARACTERS).forEach(([characterId, meta]) => {
-            if (!this.textures.exists(meta.sceneKey)) {
-              this.load.image(meta.sceneKey, meta.imagePath);
+          const imageEntries = new Map<string, string>();
+          Object.values(CHARACTERS).forEach((meta) => {
+            imageEntries.set(meta.sceneKey, meta.imagePath);
+          });
+
+          (["surangi-classic", "surangi-detective", "surangi-rainbow", "surangi-mechanic", "surangi-sun", "surangi-skater", "surangi-snack", "surangi-soccer", "turtle-classic", "turtle-coder", "turtle-sprint"] as SkinId[]).forEach((skinId) => {
+            const art = getSkinMeta(skinId).art;
+            imageEntries.set(art.imagePath, art.imagePath);
+          });
+
+          imageEntries.forEach((path, key) => {
+            if (!this.textures.exists(key)) {
+              this.load.image(key, path);
             }
           });
         }
@@ -51,6 +61,19 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
         create() {
           this.cameras.main.setBackgroundColor("#eff8f2");
           this.renderSnapshot();
+        }
+
+        private drawArt(art: ArtSource, x: number, y: number, size: number, tint?: number) {
+          const textureKey = art.kind === "image" ? art.imagePath : art.imagePath;
+          const image = this.add.image(x, y, textureKey);
+          if (art.kind === "sheet") {
+            image.setCrop(art.crop.x, art.crop.y, art.crop.width, art.crop.height);
+          }
+          image.setDisplaySize(size, size);
+          if (tint && tint !== 0xffffff) {
+            image.setTint(tint);
+          }
+          return image;
         }
 
         private renderSnapshot() {
@@ -70,7 +93,6 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
             const laneTop = 88 + index * 86;
             const trailMeta = getTrailMeta(player.trailId);
             const hatMeta = getHatMeta(player.hatId);
-            const charMeta = CHARACTERS[player.characterId];
             const skinMeta = getSkinMeta(player.skinId);
             const runnerX = 42 + ((width - 96) * player.progress) / 100;
 
@@ -101,7 +123,7 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
 
             this.add.circle(runnerX, laneTop + 38, 28, skinMeta.tint, 0.22);
             this.add.circle(runnerX, laneTop + 38, 20, trailMeta.color, 0.18);
-            this.add.image(runnerX, laneTop + 34, charMeta.sceneKey).setDisplaySize(42, 42).setTint(skinMeta.tint);
+            this.drawArt(skinMeta.art, runnerX, laneTop + 34, 42, skinMeta.tint);
             if (player.hatId !== "none") {
               this.add.text(runnerX, laneTop + 6, hatMeta.emoji, {
                 color: "#18392f",

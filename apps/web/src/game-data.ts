@@ -1,8 +1,13 @@
 export type CharacterId = "surangi" | "turtle";
 export type SkinId =
   | "surangi-classic"
-  | "surangi-cheer"
-  | "surangi-breeze"
+  | "surangi-detective"
+  | "surangi-rainbow"
+  | "surangi-mechanic"
+  | "surangi-sun"
+  | "surangi-skater"
+  | "surangi-snack"
+  | "surangi-soccer"
   | "turtle-classic"
   | "turtle-coder"
   | "turtle-sprint";
@@ -20,6 +25,24 @@ export type CosmeticProfile = {
   unlockedTrails: TrailId[];
 };
 
+export type ArtSource =
+  | {
+      kind: "image";
+      imagePath: string;
+    }
+  | {
+      kind: "sheet";
+      imagePath: string;
+      crop: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      };
+      sheetWidth: number;
+      sheetHeight: number;
+    };
+
 export const CHARACTERS: Record<CharacterId, { label: string; emoji: string; imagePath: string; sceneKey: string }> = {
   surangi: {
     label: "수랑이",
@@ -35,6 +58,24 @@ export const CHARACTERS: Record<CharacterId, { label: string; emoji: string; ima
   },
 };
 
+const SURANG_IMAGESET_PATH = "/assets/characters/surang_imageset.png";
+const SURANG_CELL_SIZE = 299;
+
+function getSurangSheetArt(column: number, row = 0): ArtSource {
+  return {
+    kind: "sheet",
+    imagePath: SURANG_IMAGESET_PATH,
+    crop: {
+      x: column * SURANG_CELL_SIZE,
+      y: row * SURANG_CELL_SIZE,
+      width: SURANG_CELL_SIZE,
+      height: SURANG_CELL_SIZE,
+    },
+    sheetWidth: 2392,
+    sheetHeight: 1792,
+  };
+}
+
 export const SKINS: Array<{
   id: SkinId;
   characterId: CharacterId;
@@ -44,36 +85,95 @@ export const SKINS: Array<{
   tint: number;
   accentColor: string;
   badge: string;
+  art: ArtSource;
 }> = [
   {
     id: "surangi-classic",
     characterId: "surangi",
-    label: "수랑이 기본",
-    subtitle: "포근한 기본 실루엣",
+    label: "캡 수랑이",
+    subtitle: "대표 메인 캐릭터",
     price: 0,
     tint: 0xffffff,
     accentColor: "#f3a68f",
     badge: "기본",
+    art: getSurangSheetArt(0, 0),
   },
   {
-    id: "surangi-cheer",
+    id: "surangi-detective",
     characterId: "surangi",
-    label: "응원단 수랑이",
-    subtitle: "하트 응원 효과가 강조된 스킨",
-    price: 180,
-    tint: 0xffd7de,
-    accentColor: "#f47f97",
+    label: "탐정 수랑이",
+    subtitle: "코트와 모자가 강조된 수집형 캐릭터",
+    price: 150,
+    tint: 0xffffff,
+    accentColor: "#5f84c9",
     badge: "인기",
+    art: getSurangSheetArt(1, 0),
   },
   {
-    id: "surangi-breeze",
+    id: "surangi-rainbow",
     characterId: "surangi",
-    label: "민트 브리즈 수랑이",
-    subtitle: "모자 톤과 잘 맞는 시원한 컬러감",
+    label: "레인보우 수랑이",
+    subtitle: "비비드한 비니 포인트가 살아 있는 캐릭터",
+    price: 190,
+    tint: 0xffffff,
+    accentColor: "#d96fd6",
+    badge: "인기",
+    art: getSurangSheetArt(2, 0),
+  },
+  {
+    id: "surangi-mechanic",
+    characterId: "surangi",
+    label: "메카닉 수랑이",
+    subtitle: "툴 벨트 콘셉트의 경쟁형 캐릭터",
     price: 210,
-    tint: 0xdff8ea,
-    accentColor: "#52b788",
+    tint: 0xffffff,
+    accentColor: "#646b75",
     badge: "희귀",
+    art: getSurangSheetArt(3, 0),
+  },
+  {
+    id: "surangi-sun",
+    characterId: "surangi",
+    label: "선샤인 수랑이",
+    subtitle: "밝은 톤과 선글라스로 존재감이 큰 캐릭터",
+    price: 170,
+    tint: 0xffffff,
+    accentColor: "#f1b93a",
+    badge: "신규",
+    art: getSurangSheetArt(4, 0),
+  },
+  {
+    id: "surangi-skater",
+    characterId: "surangi",
+    label: "스케이터 수랑이",
+    subtitle: "보드를 탄 액티브 무드 캐릭터",
+    price: 200,
+    tint: 0xffffff,
+    accentColor: "#ef8a3b",
+    badge: "시그니처",
+    art: getSurangSheetArt(5, 0),
+  },
+  {
+    id: "surangi-snack",
+    characterId: "surangi",
+    label: "낙서 수랑이",
+    subtitle: "간식과 함께하는 캐주얼 캐릭터",
+    price: 140,
+    tint: 0xffffff,
+    accentColor: "#8f8f8f",
+    badge: "한정",
+    art: getSurangSheetArt(6, 0),
+  },
+  {
+    id: "surangi-soccer",
+    characterId: "surangi",
+    label: "사커 수랑이",
+    subtitle: "경기장 감성의 스포츠 캐릭터",
+    price: 160,
+    tint: 0xffffff,
+    accentColor: "#d69d34",
+    badge: "희귀",
+    art: getSurangSheetArt(7, 0),
   },
   {
     id: "turtle-classic",
@@ -84,6 +184,10 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#8ea99b",
     badge: "기본",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/hamsurang_turtle.png",
+    },
   },
   {
     id: "turtle-coder",
@@ -94,6 +198,10 @@ export const SKINS: Array<{
     tint: 0xdcecff,
     accentColor: "#6b9ac4",
     badge: "시그니처",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/hamsurang_turtle.png",
+    },
   },
   {
     id: "turtle-sprint",
@@ -104,6 +212,10 @@ export const SKINS: Array<{
     tint: 0xe9f7d7,
     accentColor: "#7ab648",
     badge: "신규",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/hamsurang_turtle.png",
+    },
   },
 ];
 

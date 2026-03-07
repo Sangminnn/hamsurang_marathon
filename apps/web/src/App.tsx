@@ -2,6 +2,7 @@ import { startTransition, useEffect, useRef, useState } from "react";
 
 import { Client, Room } from "colyseus.js";
 
+import { CharacterArt } from "./components/CharacterArt";
 import { RaceTrackPhaser } from "./components/RaceTrackPhaser";
 import {
   CHARACTERS,
@@ -909,7 +910,12 @@ export function App() {
                     className={key === characterId ? "choice selected" : "choice"}
                     onClick={() => selectCharacter(key as CharacterId)}
                   >
-                    <img className="choice-art" src={value.imagePath} alt={value.label} />
+                    <CharacterArt
+                      className="choice-art"
+                      skinId={getDefaultSkinForCharacter(key as CharacterId)}
+                      size={88}
+                      alt={value.label}
+                    />
                     <span>{value.label}</span>
                   </button>
                 ))}
@@ -1066,7 +1072,12 @@ export function App() {
                           className={localPlayer?.characterId === key ? "choice character-choice selected" : "choice character-choice"}
                           onClick={() => selectCharacter(key as CharacterId)}
                         >
-                          <img className="choice-art" src={value.imagePath} alt={value.label} />
+                          <CharacterArt
+                            className="choice-art"
+                            skinId={getDefaultSkinForCharacter(key as CharacterId)}
+                            size={88}
+                            alt={value.label}
+                          />
                           <span className="choice-copy">
                             <strong>{value.label}</strong>
                           </span>
@@ -1093,11 +1104,7 @@ export function App() {
                                 onClick={() => unlockOrEquipSkin(skin.id)}
                               >
                                 <div className="cosmetic-copy cosmetic-copy-with-thumb">
-                                  <img
-                                    className="cosmetic-thumb"
-                                    src={CHARACTERS[skin.characterId].imagePath}
-                                    alt={skin.label}
-                                  />
+                                  <CharacterArt className="cosmetic-thumb" skinId={skin.id} size={44} alt={skin.label} />
                                   <div>
                                     <strong>
                                       {skin.label} <span className="cosmetic-inline-badge">{skin.badge}</span>
@@ -1212,7 +1219,7 @@ export function App() {
                         <article key={player.renderKey} className="player-card">
                           <div className="player-copy">
                             <strong className="player-name name-with-avatar">
-                              <img className="player-avatar" src={CHARACTERS[player.characterId].imagePath} alt={CHARACTERS[player.characterId].label} />
+                              <CharacterArt className="player-avatar" skinId={player.skinId} size={42} alt={getSkinMeta(player.skinId).label} />
                               <span>{player.name}</span>
                             </strong>
                             <div className="player-meta">
@@ -1254,10 +1261,11 @@ export function App() {
                           <span className="loadout-preview-hat">
                             {profile.equippedHat === "none" ? "" : getHatMeta(profile.equippedHat).emoji}
                           </span>
-                          <img
+                          <CharacterArt
                             className="loadout-preview-avatar"
-                            src={CHARACTERS[selectedCharacterId].imagePath}
-                            alt={CHARACTERS[selectedCharacterId].label}
+                            skinId={profile.equippedSkin}
+                            size={112}
+                            alt={getSkinMeta(profile.equippedSkin).label}
                           />
                           <div className="loadout-preview-trail">
                             <span style={{ backgroundColor: `#${getTrailMeta(profile.equippedTrail).color.toString(16).padStart(6, "0")}` }} />
@@ -1287,7 +1295,7 @@ export function App() {
                       <article key={player.renderKey} className="mini-lane-card">
                         <div className="mini-lane-copy">
                           <strong className="name-with-avatar">
-                            <img className="mini-avatar" src={CHARACTERS[player.characterId].imagePath} alt={CHARACTERS[player.characterId].label} />
+                            <CharacterArt className="mini-avatar" skinId={player.skinId} size={28} alt={getSkinMeta(player.skinId).label} />
                             <span>{player.name}</span>
                           </strong>
                           <span>
@@ -1308,7 +1316,7 @@ export function App() {
                     <strong className="name-with-avatar">
                       {winner ? (
                         <>
-                          <img className="winner-avatar" src={CHARACTERS[winner.characterId].imagePath} alt={CHARACTERS[winner.characterId].label} />
+                          <CharacterArt className="winner-avatar" skinId={winner.skinId} size={52} alt={getSkinMeta(winner.skinId).label} />
                           <span>{winner.name}</span>
                         </>
                       ) : (
@@ -1327,7 +1335,7 @@ export function App() {
                       <article key={player.renderKey} className="result-row">
                         <div className="result-copy">
                           <strong className="name-with-avatar">
-                            <img className="mini-avatar" src={CHARACTERS[player.characterId].imagePath} alt={CHARACTERS[player.characterId].label} />
+                            <CharacterArt className="mini-avatar" skinId={player.skinId} size={28} alt={getSkinMeta(player.skinId).label} />
                             <span>{player.place}위 · {player.name}</span>
                           </strong>
                           <p>
