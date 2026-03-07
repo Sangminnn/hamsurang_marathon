@@ -16,18 +16,24 @@ type JoinOptions = {
 };
 
 type RuntimeInputState = {
-  lastDirection: InputDirection | null;
   lastInputAt: number;
+  targetHeadingDeg: number;
 };
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 8;
 const COUNTDOWN_MS = 3000;
 const RACE_DURATION_MS = 30000;
-const PROGRESS_PER_VALID_INPUT = 2.4;
 const MAX_PROGRESS = 100;
-const MIN_INPUT_INTERVAL_MS = 45;
+const MIN_INPUT_INTERVAL_MS = 80;
 const MAX_NICKNAME_LENGTH = 12;
+const RACE_TICK_MS = 50;
+const MAX_HEADING_DEG = 34;
+const LATERAL_LIMIT = 1;
+const BASE_FORWARD_SPEED = 18;
+const STRAIGHT_RECENTER_MS = 650;
+const HEADING_RESPONSE = 7.5;
+const LATERAL_SPEED = 1.8;
 
 export class MarathonRoom extends Room<MarathonRoomState> {
   maxClients = MAX_PLAYERS;
@@ -36,6 +42,7 @@ export class MarathonRoom extends Room<MarathonRoomState> {
 
   private countdownTimer?: ReturnType<typeof setTimeout>;
   private raceTimer?: ReturnType<typeof setTimeout>;
+  private raceLoopTimer?: ReturnType<typeof setInterval>;
   private runtimeInputs = new Map<string, RuntimeInputState>();
 
   onCreate() {
@@ -157,8 +164,8 @@ export class MarathonRoom extends Room<MarathonRoomState> {
 
         const now = Date.now();
         const runtimeState = this.runtimeInputs.get(client.sessionId) ?? {
-          lastDirection: null,
           lastInputAt: 0,
+          targetHeadingDeg: 0,
         };
 
         const interval = now - runtimeState.lastInputAt;
@@ -166,23 +173,10 @@ export class MarathonRoom extends Room<MarathonRoomState> {
           return;
         }
 
-        if (runtimeState.lastDirection === payload.direction) {
-          return;
-        }
-
-        runtimeState.lastDirection = payload.direction;
         runtimeState.lastInputAt = now;
+        runtimeState.targetHeadingDeg =
+          payload.direction === "left" ? -MAX_HEADING_DEG : MAX_HEADING_DEG;
         this.runtimeInputs.set(client.sessionId, runtimeState);
-
-        player.progress = Math.min(
-          MAX_PROGRESS,
-          Number((player.progress + PROGRESS_PER_VALID_INPUT).toFixed(2)),
-        );
-
-        if (player.progress >= MAX_PROGRESS && player.finishMs === 0) {
-          player.finishMs = now - this.state.raceStartedAt;
-          this.finishRaceIfComplete();
-        }
       },
     );
 
@@ -202,8 +196,8 @@ export class MarathonRoom extends Room<MarathonRoomState> {
     player.isConnected = true;
     this.state.players.set(client.sessionId, player);
     this.runtimeInputs.set(client.sessionId, {
-      lastDirection: null,
       lastInputAt: 0,
+      targetHeadingDeg: 0,
     });
 
     this.broadcast("toast", {
@@ -252,6 +246,9 @@ export class MarathonRoom extends Room<MarathonRoomState> {
     this.cancelCountdown();
     if (this.raceTimer) {
       clearTimeout(this.raceTimer);
+    }
+    if (this.raceLoopTimer) {
+      clearInterval(this.raceLoopTimer);
     }
     removeRoom(this.roomId);
   }
@@ -321,6 +318,8 @@ export class MarathonRoom extends Room<MarathonRoomState> {
 
     for (const player of this.state.players.values()) {
       player.progress = 0;
+      player.headingDeg = 0;
+      player.lateralOffset = 0;
       player.finishMs = 0;
       player.place = 0;
       player.isReady = false;
@@ -329,12 +328,19 @@ export class MarathonRoom extends Room<MarathonRoomState> {
     this.runtimeInputs.clear();
     for (const sessionId of this.state.players.keys()) {
       this.runtimeInputs.set(sessionId, {
-        lastDirection: null,
         lastInputAt: 0,
+        targetHeadingDeg: 0,
       });
     }
 
     this.broadcast("raceStarted", { endsAt: this.state.raceEndsAt });
+    let lastTickAt = Date.now();
+    this.raceLoopTimer = setInterval(() => {
+      const now = Date.now();
+      const deltaSeconds = Math.max(0.016, (now - lastTickAt) / 1000);
+      lastTickAt = now;
+      this.stepRace(deltaSeconds, now);
+    }, RACE_TICK_MS);
     this.raceTimer = setTimeout(() => {
       this.finishRace();
     }, this.state.raceDurationMs);
@@ -357,6 +363,10 @@ export class MarathonRoom extends Room<MarathonRoomState> {
     if (this.raceTimer) {
       clearTimeout(this.raceTimer);
       this.raceTimer = undefined;
+    }
+    if (this.raceLoopTimer) {
+      clearInterval(this.raceLoopTimer);
+      this.raceLoopTimer = undefined;
     }
 
     this.state.phase = "results";
@@ -389,6 +399,10 @@ export class MarathonRoom extends Room<MarathonRoomState> {
       clearTimeout(this.raceTimer);
       this.raceTimer = undefined;
     }
+    if (this.raceLoopTimer) {
+      clearInterval(this.raceLoopTimer);
+      this.raceLoopTimer = undefined;
+    }
 
     this.state.phase = "lobby";
     this.state.countdownStartedAt = 0;
@@ -401,9 +415,56 @@ export class MarathonRoom extends Room<MarathonRoomState> {
 
     for (const player of this.state.players.values()) {
       player.progress = 0;
+      player.headingDeg = 0;
+      player.lateralOffset = 0;
       player.finishMs = 0;
       player.place = 0;
       player.isReady = false;
+    }
+  }
+
+  private stepRace(deltaSeconds: number, now: number) {
+    let didAnyPlayerFinish = false;
+
+    for (const player of this.state.players.values()) {
+      if (player.finishMs > 0) {
+        continue;
+      }
+
+      const runtimeState = this.runtimeInputs.get(player.sessionId) ?? {
+        lastInputAt: 0,
+        targetHeadingDeg: 0,
+      };
+      const idleMs = now - runtimeState.lastInputAt;
+      const targetHeadingDeg = idleMs > STRAIGHT_RECENTER_MS ? 0 : runtimeState.targetHeadingDeg;
+      const lerpFactor = Math.min(1, deltaSeconds * HEADING_RESPONSE);
+
+      player.headingDeg = Number(
+        (player.headingDeg + (targetHeadingDeg - player.headingDeg) * lerpFactor).toFixed(2),
+      );
+
+      const lateralVelocity = (player.headingDeg / MAX_HEADING_DEG) * LATERAL_SPEED;
+      player.lateralOffset = Number(
+        Math.max(-LATERAL_LIMIT, Math.min(LATERAL_LIMIT, player.lateralOffset + lateralVelocity * deltaSeconds))
+          .toFixed(3),
+      );
+
+      const steeringPenalty = Math.abs(player.headingDeg) / MAX_HEADING_DEG;
+      const edgePenalty = Math.abs(player.lateralOffset) > 0.82 ? 0.62 : 1;
+      const forwardDelta =
+        BASE_FORWARD_SPEED * (1 - steeringPenalty * 0.28) * edgePenalty * deltaSeconds;
+
+      player.progress = Math.min(MAX_PROGRESS, Number((player.progress + forwardDelta).toFixed(2)));
+
+      if (player.progress >= MAX_PROGRESS) {
+        player.progress = MAX_PROGRESS;
+        player.finishMs = now - this.state.raceStartedAt;
+        didAnyPlayerFinish = true;
+      }
+    }
+
+    if (didAnyPlayerFinish) {
+      this.finishRaceIfComplete();
     }
   }
 

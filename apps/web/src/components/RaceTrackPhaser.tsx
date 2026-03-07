@@ -9,6 +9,8 @@ type RacePlayer = {
   skinId: SkinId;
   trailId: TrailId;
   progress: number;
+  headingDeg: number;
+  lateralOffset: number;
   place: number;
   isLocal: boolean;
 };
@@ -90,6 +92,33 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
           return image;
         }
 
+        private drawSteerArrow(x: number, y: number, headingDeg: number, color: number) {
+          const graphics = this.add.graphics();
+          const curveStrength = Math.max(-1, Math.min(1, headingDeg / 34));
+          const arcWidth = 18 + Math.abs(curveStrength) * 12;
+          const arcHeight = 14 + Math.abs(curveStrength) * 6;
+          const direction = curveStrength >= 0 ? 1 : -1;
+          const startX = x - arcWidth * 0.5 * direction;
+          const controlX = x + arcWidth * 0.22 * direction;
+          const endX = x + arcWidth * 0.5 * direction;
+          const endY = y - arcHeight * 0.2;
+          const arrowPath = new Phaser.Curves.QuadraticBezier(
+            new Phaser.Math.Vector2(startX, y),
+            new Phaser.Math.Vector2(controlX, y - arcHeight),
+            new Phaser.Math.Vector2(endX, endY),
+          );
+
+          graphics.lineStyle(2, color, 0.96);
+          graphics.strokePoints(arrowPath.getPoints(14));
+          graphics.fillStyle(color, 0.96);
+          graphics.beginPath();
+          graphics.moveTo(endX, endY);
+          graphics.lineTo(endX - 6 * direction, endY - 4);
+          graphics.lineTo(endX - 6 * direction, endY + 4);
+          graphics.closePath();
+          graphics.fillPath();
+        }
+
         private renderSnapshot() {
           const { width, height } = this.scale;
           this.children.removeAll();
@@ -110,8 +139,8 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
           const startX = trackLeft + Math.max(24, trackWidth * 0.08);
           const finishX = trackRight - Math.max(24, trackWidth * 0.1);
           const runnerSize = Math.max(
-            isMobile ? 26 : 32,
-            Math.min(isMobile ? 54 : 68, laneHeight * (isMobile ? 0.44 : 0.52)),
+            isMobile ? 32 : 40,
+            Math.min(isMobile ? 58 : 76, laneHeight * (isMobile ? 0.5 : 0.58)),
           );
           const labelFontSize = isMobile ? "11px" : "13px";
 
@@ -154,7 +183,9 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
           orderedPlayers.forEach((player, index) => {
             const trailMeta = getTrailMeta(player.trailId);
             const skinMeta = getSkinMeta(player.skinId);
-            const centerY = trackTop + laneHeight * index + laneHeight / 2;
+            const laneCenterY = trackTop + laneHeight * index + laneHeight / 2;
+            const laneDriftLimit = Math.max(10, laneHeight * 0.26);
+            const centerY = laneCenterY + player.lateralOffset * laneDriftLimit;
             const x = startX + ((finishX - startX - runnerSize * 0.16) * player.progress) / 100;
             const shadowWidth = runnerSize * 0.92;
             const shadowHeight = Math.max(8, runnerSize * 0.22);
@@ -165,9 +196,16 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
             this.add.circle(x - runnerSize * 0.82, centerY + runnerSize * 0.14, Math.max(2, runnerSize * 0.12), trailMeta.color, 0.34);
             this.add.circle(x - runnerSize * 1.08, centerY + runnerSize * 0.16, Math.max(2, runnerSize * 0.08), trailMeta.color, 0.22);
             this.add.circle(x - runnerSize * 1.32, centerY + runnerSize * 0.18, Math.max(1, runnerSize * 0.05), trailMeta.color, 0.14);
-            this.drawArt(skinMeta.art, x, centerY, runnerSize, skinMeta.tint);
+            this.drawArt(skinMeta.art, x, centerY, runnerSize, skinMeta.tint)
+              .setRotation((player.headingDeg * Math.PI) / 1800);
+            this.drawSteerArrow(
+              x,
+              centerY - runnerSize * 0.92,
+              player.headingDeg,
+              player.isLocal ? 0x1d5a46 : 0x608277,
+            );
 
-            const tag = this.add.container(x, centerY - runnerSize * 0.72);
+            const tag = this.add.container(x, centerY - runnerSize * 1.26);
             const tagBg = this.add.rectangle(0, 0, tagWidth, isMobile ? 22 : 26, player.isLocal ? 0x224c3d : 0xffffff, player.isLocal ? 0.96 : 0.92)
               .setStrokeStyle(1, player.isLocal ? 0x4fad83 : 0xd6e5db, 1);
             const tagText = this.add.text(0, 0, tagTextValue, {

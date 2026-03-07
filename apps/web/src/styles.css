@@ -46,7 +46,7 @@ button {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 14px;
-  padding: 14px 12px 18px;
+  padding: 14px 12px calc(132px + env(safe-area-inset-bottom));
 }
 
 .race-page-header {
@@ -122,10 +122,9 @@ button {
 .race-sidebar > * {
   padding: 12px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(103, 145, 123, 0.18);
-  box-shadow: 0 18px 34px rgba(52, 86, 69, 0.08);
-  backdrop-filter: blur(10px);
+  background: rgba(248, 252, 249, 0.96);
+  border: 1px solid rgba(103, 145, 123, 0.22);
+  box-shadow: 0 14px 28px rgba(52, 86, 69, 0.08);
 }
 
 .race-sidebar {
@@ -193,6 +192,10 @@ button {
 .race-input-panel {
   display: grid;
   gap: 12px;
+  position: sticky;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  z-index: 10;
+  box-shadow: 0 18px 32px rgba(21, 49, 39, 0.14);
 }
 
 .phone-frame {
@@ -1160,8 +1163,8 @@ button {
   min-height: 0;
   overflow: hidden;
   border-radius: 20px;
-  border: 1px solid rgba(113, 154, 129, 0.14);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(239, 248, 242, 0.9));
+  border: 1px solid rgba(113, 154, 129, 0.2);
+  background: #edf7f1;
 }
 
 .input-deck {
@@ -1271,6 +1274,12 @@ button {
     gap: 16px;
     position: sticky;
     top: 24px;
+  }
+
+  .race-input-panel {
+    position: static;
+    bottom: auto;
+    box-shadow: none;
   }
 
   .app-shell {

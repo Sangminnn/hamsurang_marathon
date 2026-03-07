@@ -6,13 +6,12 @@ import { toast as sonnerToast } from "sonner";
 import { CharacterArt } from "./components/CharacterArt";
 import { RaceTrackPhaser } from "./components/RaceTrackPhaser";
 import {
-  CHARACTERS,
   DEFAULT_PROFILE,
   FREE_SKIN_IDS,
-  SKINS,
   TRAILS,
   getCharacterSkins,
   getDefaultSkinForCharacter,
+  PLAYABLE_CHARACTERS,
   getRaceReward,
   getSkinMeta,
   getTrailMeta,
@@ -38,6 +37,8 @@ type PlayerSnapshot = {
   skinId: SkinId;
   trailId: TrailId;
   progress: number;
+  headingDeg: number;
+  lateralOffset: number;
   finishMs: number;
   place: number;
 };
@@ -104,18 +105,19 @@ function getDefaultServerUrl() {
 }
 
 function normalizeCharacterId(value: string | undefined): CharacterId {
-  return value === "turtle" ? "turtle" : "surangi";
+  return "surangi";
 }
 
 function normalizeSkinId(value: string | undefined, fallbackCharacterId: CharacterId): SkinId {
-  return SKINS.some((skin) => skin.id === value)
+  return getCharacterSkins("surangi").some((skin) => skin.id === value)
     ? (value as SkinId)
     : getDefaultSkinForCharacter(fallbackCharacterId);
 }
 
 function normalizeUnlockedSkinIds(skinIds: string[] | undefined) {
-  const merged = Array.from(new Set([...(skinIds ?? []), ...FREE_SKIN_IDS]));
-  return merged.map((skinId) => normalizeSkinId(skinId, "surangi"));
+  return Array.from(
+    new Set([...(skinIds ?? []), ...FREE_SKIN_IDS].map((skinId) => normalizeSkinId(skinId, "surangi"))),
+  );
 }
 
 function normalizeTrailId(value: string | undefined): TrailId {
@@ -137,6 +139,8 @@ function normalizePlayer(rawPlayer: RawPlayerLike, fallbackKey: string): PlayerS
     skinId: normalizeSkinId(rawPlayer.skinId, characterId),
     trailId: normalizeTrailId(rawPlayer.trailId),
     progress: rawPlayer.progress ?? 0,
+    headingDeg: rawPlayer.headingDeg ?? 0,
+    lateralOffset: rawPlayer.lateralOffset ?? 0,
     finishMs: rawPlayer.finishMs ?? 0,
     place: rawPlayer.place ?? 0,
   };
@@ -861,7 +865,7 @@ export function App() {
                       <CharacterArt className="mini-avatar" skinId={player.skinId} size={32} alt={getSkinMeta(player.skinId).label} />
                       <div className="race-standing-copy">
                         <strong>{player.name}</strong>
-                        <span>{player.progress.toFixed(0)}m · {getSkinMeta(player.skinId).badge}</span>
+                        <span>{player.progress.toFixed(0)}m · 조향 {player.headingDeg > 6 ? "우" : player.headingDeg < -6 ? "좌" : "정면"}</span>
                       </div>
                     </article>
                   ))}
@@ -870,15 +874,15 @@ export function App() {
 
               <div className="race-input-panel">
                 <div className="section-copy">
-                  <p className="panel-title">탭 입력</p>
-                  <p>LEFT와 RIGHT를 번갈아 누를수록 속도가 붙습니다.</p>
+                  <p className="panel-title">조향 입력</p>
+                  <p>캐릭터는 자동으로 전진합니다. 좌우 버튼으로 화살표 방향을 꺾어 트랙 안에서 조향하세요.</p>
                 </div>
                 <div className="input-deck input-deck-large">
                   <button type="button" className="tap-button tap-button-left" onPointerDown={() => sendInput("left")}>
-                    LEFT
+                    ↶ LEFT
                   </button>
                   <button type="button" className="tap-button tap-button-right" onPointerDown={() => sendInput("right")}>
-                    RIGHT
+                    RIGHT ↷
                   </button>
                 </div>
               </div>
@@ -974,20 +978,20 @@ export function App() {
                 <p>선택한 캐릭터와 꾸미기 상태가 방 안의 다른 참가자 화면에도 그대로 반영됩니다.</p>
               </div>
               <div className="character-grid">
-                {Object.entries(CHARACTERS).map(([key, value]) => (
+                {PLAYABLE_CHARACTERS.map(({ id, label }) => (
                   <button
-                    key={key}
+                    key={id}
                     type="button"
-                    className={key === characterId ? "choice selected" : "choice"}
-                    onClick={() => selectCharacter(key as CharacterId)}
+                    className={id === characterId ? "choice selected" : "choice"}
+                    onClick={() => selectCharacter(id)}
                   >
                     <CharacterArt
                       className="choice-art"
-                      skinId={getDefaultSkinForCharacter(key as CharacterId)}
+                      skinId={getDefaultSkinForCharacter(id)}
                       size={88}
-                      alt={value.label}
+                      alt={label}
                     />
-                    <span>{value.label}</span>
+                    <span>{label}</span>
                   </button>
                 ))}
               </div>
@@ -1130,21 +1134,21 @@ export function App() {
                       <p>선택 캐릭터에 맞는 스킨과 트레일을 준비하면 레이스 시작과 함께 다른 참가자에게 그대로 보입니다.</p>
                     </div>
                     <div className="character-grid">
-                      {Object.entries(CHARACTERS).map(([key, value]) => (
+                      {PLAYABLE_CHARACTERS.map(({ id, label }) => (
                         <button
-                          key={key}
+                          key={id}
                           type="button"
-                          className={localPlayer?.characterId === key ? "choice character-choice selected" : "choice character-choice"}
-                          onClick={() => selectCharacter(key as CharacterId)}
+                          className={localPlayer?.characterId === id ? "choice character-choice selected" : "choice character-choice"}
+                          onClick={() => selectCharacter(id)}
                         >
                           <CharacterArt
                             className="choice-art"
-                            skinId={getDefaultSkinForCharacter(key as CharacterId)}
+                            skinId={getDefaultSkinForCharacter(id)}
                             size={88}
-                            alt={value.label}
+                            alt={label}
                           />
                           <span className="choice-copy">
-                            <strong>{value.label}</strong>
+                            <strong>{label}</strong>
                           </span>
                         </button>
                       ))}
