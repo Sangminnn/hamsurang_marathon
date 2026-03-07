@@ -18,7 +18,7 @@ export function CharacterArt({ skinId, size, alt, className }: CharacterArtProps
         className={className}
         src={art.imagePath}
         alt={alt}
-        style={{ width: size, height: size, objectFit: "contain" }}
+        style={{ width: size, height: size, objectFit: "contain", display: "block", flex: "0 0 auto" }}
       />
     );
   }
