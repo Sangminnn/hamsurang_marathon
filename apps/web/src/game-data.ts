@@ -1,16 +1,13 @@
 export type CharacterId = "surangi" | "turtle";
 export type SkinId = string;
-export type HatId = "none" | "cap" | "crown" | "leaf" | "visor";
 export type TrailId = "mint" | "spark" | "flame" | "petal";
 
 export type CosmeticProfile = {
   preferredName: string;
   coins: number;
   equippedSkin: SkinId;
-  equippedHat: HatId;
   equippedTrail: TrailId;
   unlockedSkins: SkinId[];
-  unlockedHats: HatId[];
   unlockedTrails: TrailId[];
 };
 
@@ -32,17 +29,44 @@ export type ArtSource =
       sheetHeight: number;
     };
 
+const SURANG_SHEET_PATH = "/assets/characters/surang_only_remove_bg.png";
+const SURANG_SHEET_WIDTH = 2292;
+const SURANG_SHEET_HEIGHT = 874;
+const HAMBUGI_SHEET_PATH = "/assets/characters/hambugi_remove_bg.png";
+const HAMBUGI_SHEET_WIDTH = 2274;
+const HAMBUGI_SHEET_HEIGHT = 866;
+
+function surangSheetCrop(x: number, y: number, width: number, height: number): ArtSource {
+  return {
+    kind: "sheet",
+    imagePath: SURANG_SHEET_PATH,
+    crop: { x, y, width, height },
+    sheetWidth: SURANG_SHEET_WIDTH,
+    sheetHeight: SURANG_SHEET_HEIGHT,
+  };
+}
+
+function hambugiSheetCrop(x: number, y: number, width: number, height: number): ArtSource {
+  return {
+    kind: "sheet",
+    imagePath: HAMBUGI_SHEET_PATH,
+    crop: { x, y, width, height },
+    sheetWidth: HAMBUGI_SHEET_WIDTH,
+    sheetHeight: HAMBUGI_SHEET_HEIGHT,
+  };
+}
+
 export const CHARACTERS: Record<CharacterId, { label: string; emoji: string; imagePath: string; sceneKey: string }> = {
   surangi: {
     label: "수랑이",
     emoji: "🤍",
-    imagePath: "/assets/characters/hamsurang_surang.png",
+    imagePath: SURANG_SHEET_PATH,
     sceneKey: "character-surangi",
   },
   turtle: {
     label: "거북이",
     emoji: "🐢",
-    imagePath: "/assets/characters/hamsurang_turtle.png",
+    imagePath: HAMBUGI_SHEET_PATH,
     sceneKey: "character-turtle",
   },
 };
@@ -67,10 +91,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#f3a68f",
     badge: "기본",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-classic.png",
-    },
+    art: surangSheetCrop(0, 0, 300, 292),
   },
   {
     id: "surangi-detective",
@@ -81,10 +102,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#5f84c9",
     badge: "인기",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-detective.png",
-    },
+    art: surangSheetCrop(280, 0, 310, 292),
   },
   {
     id: "surangi-rainbow",
@@ -95,10 +113,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d96fd6",
     badge: "인기",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-rainbow.png",
-    },
+    art: surangSheetCrop(560, 0, 320, 292),
   },
   {
     id: "surangi-mechanic",
@@ -109,10 +124,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#646b75",
     badge: "희귀",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-mechanic.png",
-    },
+    art: surangSheetCrop(850, 0, 320, 292),
   },
   {
     id: "surangi-sun",
@@ -123,10 +135,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#f1b93a",
     badge: "신규",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-sun.png",
-    },
+    art: surangSheetCrop(1130, 0, 315, 292),
   },
   {
     id: "surangi-skater",
@@ -137,10 +146,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#ef8a3b",
     badge: "시그니처",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-skater.png",
-    },
+    art: surangSheetCrop(1410, 0, 330, 292),
   },
   {
     id: "surangi-explorer",
@@ -151,10 +157,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#5f9a86",
     badge: "신규",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-explorer.png",
-    },
+    art: surangSheetCrop(0, 290, 320, 320),
   },
   {
     id: "surangi-farmer",
@@ -165,10 +168,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#7ea45a",
     badge: "희귀",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-farmer.png",
-    },
+    art: surangSheetCrop(280, 290, 330, 320),
   },
   {
     id: "surangi-diver",
@@ -179,10 +179,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#e28a2a",
     badge: "희귀",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-diver.png",
-    },
+    art: surangSheetCrop(570, 290, 330, 320),
   },
   {
     id: "surangi-blossom",
@@ -193,10 +190,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d5798c",
     badge: "인기",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-blossom.png",
-    },
+    art: surangSheetCrop(860, 290, 330, 320),
   },
   {
     id: "surangi-headset",
@@ -207,10 +201,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#9a82d8",
     badge: "인기",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-headset.png",
-    },
+    art: surangSheetCrop(1140, 290, 320, 320),
   },
   {
     id: "surangi-dj",
@@ -221,10 +212,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#a06cd5",
     badge: "시그니처",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-dj.png",
-    },
+    art: surangSheetCrop(1930, 290, 362, 320),
   },
   {
     id: "surangi-chef",
@@ -235,10 +223,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d96c63",
     badge: "인기",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-chef.png",
-    },
+    art: surangSheetCrop(250, 580, 340, 294),
   },
   {
     id: "surangi-astronaut",
@@ -249,10 +234,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#7f90d4",
     badge: "전설",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-astronaut.png",
-    },
+    art: surangSheetCrop(560, 580, 320, 294),
   },
   {
     id: "surangi-runner",
@@ -263,10 +245,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#f08f4e",
     badge: "신규",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-runner.png",
-    },
+    art: surangSheetCrop(840, 580, 340, 294),
   },
   {
     id: "surangi-winter",
@@ -277,10 +256,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#85c7d4",
     badge: "희귀",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-winter.png",
-    },
+    art: surangSheetCrop(1120, 580, 340, 294),
   },
   {
     id: "surangi-pilot",
@@ -291,10 +267,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#4b6cb7",
     badge: "희귀",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-pilot.png",
-    },
+    art: surangSheetCrop(1450, 580, 260, 294),
   },
   {
     id: "surangi-banker",
@@ -305,10 +278,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#816b4a",
     badge: "희귀",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-banker.png",
-    },
+    art: surangSheetCrop(1715, 580, 285, 294),
   },
   {
     id: "surangi-cadet",
@@ -319,10 +289,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d6a13d",
     badge: "신규",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/surang_roster/surangi-cadet.png",
-    },
+    art: surangSheetCrop(1970, 580, 322, 294),
   },
   {
     id: "turtle-classic",
@@ -375,10 +342,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#7d8f5b",
     badge: "인기",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-writer.png",
-    },
+    art: hambugiSheetCrop(0, 450, 380, 416),
   },
   {
     id: "turtle-accountant",
@@ -487,10 +451,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d55a3e",
     badge: "신규",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-firefighter.png",
-    },
+    art: hambugiSheetCrop(0, 0, 380, 450),
   },
   {
     id: "turtle-diver",
@@ -501,10 +462,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d28a2a",
     badge: "희귀",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-diver.png",
-    },
+    art: hambugiSheetCrop(380, 0, 420, 450),
   },
   {
     id: "turtle-rose-agent",
@@ -515,10 +473,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#5a5a5a",
     badge: "희귀",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-rose-agent.png",
-    },
+    art: hambugiSheetCrop(760, 0, 420, 450),
   },
   {
     id: "turtle-gardener",
@@ -529,10 +484,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#79a85a",
     badge: "인기",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-gardener.png",
-    },
+    art: hambugiSheetCrop(1120, 0, 370, 450),
   },
   {
     id: "turtle-builder",
@@ -543,10 +495,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#58b4b4",
     badge: "신규",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-builder.png",
-    },
+    art: hambugiSheetCrop(1450, 0, 450, 450),
   },
   {
     id: "turtle-headset",
@@ -557,10 +506,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#8d6ac6",
     badge: "인기",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-headset.png",
-    },
+    art: hambugiSheetCrop(1860, 0, 414, 450),
   },
   {
     id: "turtle-scholar",
@@ -585,10 +531,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#7da85f",
     badge: "인기",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-architect.png",
-    },
+    art: hambugiSheetCrop(380, 450, 430, 416),
   },
   {
     id: "turtle-astronaut",
@@ -599,10 +542,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#c0c8d9",
     badge: "전설",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-astronaut.png",
-    },
+    art: hambugiSheetCrop(800, 450, 360, 416),
   },
   {
     id: "turtle-chef-green",
@@ -613,10 +553,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#87a860",
     badge: "인기",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-chef-green.png",
-    },
+    art: hambugiSheetCrop(1140, 450, 370, 416),
   },
   {
     id: "turtle-arcade",
@@ -627,10 +564,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#5c8fc7",
     badge: "시그니처",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-arcade.png",
-    },
+    art: hambugiSheetCrop(1490, 450, 450, 416),
   },
   {
     id: "turtle-painter",
@@ -641,24 +575,8 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#78a764",
     badge: "신규",
-    art: {
-      kind: "image",
-      imagePath: "/assets/characters/turtle_roster/turtle-painter.png",
-    },
+    art: hambugiSheetCrop(1910, 450, 364, 416),
   },
-];
-
-export const HATS: Array<{
-  id: HatId;
-  label: string;
-  emoji: string;
-  price: number;
-}> = [
-  { id: "none", label: "기본", emoji: "▫️", price: 0 },
-  { id: "cap", label: "캡", emoji: "🧢", price: 0 },
-  { id: "crown", label: "왕관", emoji: "👑", price: 120 },
-  { id: "leaf", label: "리프", emoji: "🍃", price: 90 },
-  { id: "visor", label: "바이저", emoji: "🥽", price: 140 },
 ];
 
 export const TRAILS: Array<{
@@ -678,10 +596,8 @@ export const DEFAULT_PROFILE: CosmeticProfile = {
   preferredName: "",
   coins: 180,
   equippedSkin: "surangi-classic",
-  equippedHat: "cap",
   equippedTrail: "mint",
   unlockedSkins: ["surangi-classic", "turtle-classic"],
-  unlockedHats: ["none", "cap"],
   unlockedTrails: ["mint"],
 };
 
@@ -699,10 +615,6 @@ export function getRaceReward(place: number) {
   }
 
   return 50;
-}
-
-export function getHatMeta(hatId: HatId) {
-  return HATS.find((hat) => hat.id === hatId) ?? HATS[0];
 }
 
 export function getSkinMeta(skinId: SkinId) {

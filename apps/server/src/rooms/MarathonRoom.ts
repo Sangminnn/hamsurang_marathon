@@ -74,7 +74,6 @@ export class MarathonRoom extends Room<MarathonRoomState> {
         client,
         payload: {
           skinId: string;
-          hatId: "none" | "cap" | "crown" | "leaf" | "visor";
           trailId: "mint" | "spark" | "flame" | "petal";
         },
       ) => {
@@ -84,7 +83,6 @@ export class MarathonRoom extends Room<MarathonRoomState> {
         }
 
         player.skinId = payload.skinId;
-        player.hatId = payload.hatId;
         player.trailId = payload.trailId;
         this.syncRegistry();
       },

@@ -1,13 +1,12 @@
 import { useEffect, useRef } from "react";
 
-import { getHatMeta, getSkinMeta, getTrailMeta, SKINS, type ArtSource, type CharacterId, type HatId, type SkinId, type TrailId } from "../game-data";
+import { getSkinMeta, getTrailMeta, SKINS, type ArtSource, type CharacterId, type SkinId, type TrailId } from "../game-data";
 
 type RacePlayer = {
   renderKey: string;
   name: string;
   characterId: CharacterId;
   skinId: SkinId;
-  hatId: HatId;
   trailId: TrailId;
   progress: number;
   place: number;
@@ -132,7 +131,6 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
             })
             .forEach((player, index) => {
             const trailMeta = getTrailMeta(player.trailId);
-            const hatMeta = getHatMeta(player.hatId);
             const skinMeta = getSkinMeta(player.skinId);
             const y = trackTop + trackHeight / 2 + laneOffsets[index % laneOffsets.length];
             const x = startX + ((finishX - startX - 18) * player.progress) / 100;
@@ -143,13 +141,6 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
             this.add.circle(x - 64, y + 42, 3, trailMeta.color, 0.14);
             this.add.circle(x, y + 18, player.isLocal ? 42 : 34, trailMeta.color, player.isLocal ? 0.18 : 0.12);
             this.drawArt(skinMeta.art, x, y + 8, player.isLocal ? 92 : 84, skinMeta.tint);
-            if (player.hatId !== "none") {
-              this.add.text(x, y - 30, hatMeta.emoji, {
-                color: "#18392f",
-                fontFamily: "Apple Color Emoji, Segoe UI Emoji, sans-serif",
-                fontSize: player.isLocal ? "26px" : "22px",
-              }).setOrigin(0.5, 0.5);
-            }
             const tag = this.add.container(x, y - 70);
             const badgeWidth = Math.max(92, player.name.length * 12 + 52);
             const tagBg = this.add.rectangle(0, 0, badgeWidth, 30, player.isLocal ? 0x224c3d : 0xffffff, player.isLocal ? 0.94 : 0.9)

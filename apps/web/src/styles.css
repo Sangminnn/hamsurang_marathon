@@ -1006,15 +1006,6 @@ button {
   filter: drop-shadow(0 14px 24px rgba(34, 74, 59, 0.14));
 }
 
-.loadout-preview-hat {
-  position: absolute;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 1.7rem;
-  line-height: 1;
-}
-
 .loadout-preview-trail {
   position: absolute;
   left: calc(50% - 72px);

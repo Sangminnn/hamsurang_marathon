@@ -10,7 +10,6 @@ export class PlayerState extends Schema {
   @type("boolean") isConnected = true;
   @type("string") characterId = "surangi";
   @type("string") skinId = "surangi-classic";
-  @type("string") hatId = "none";
   @type("string") trailId = "mint";
   @type("number") progress = 0;
   @type("number") finishMs = 0;

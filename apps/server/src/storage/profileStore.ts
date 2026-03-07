@@ -6,10 +6,8 @@ export type StoredProfile = {
   preferredName: string;
   coins: number;
   equippedSkin: string;
-  equippedHat: "none" | "cap" | "crown" | "leaf" | "visor";
   equippedTrail: "mint" | "spark" | "flame" | "petal";
   unlockedSkins: string[];
-  unlockedHats: Array<"none" | "cap" | "crown" | "leaf" | "visor">;
   unlockedTrails: Array<"mint" | "spark" | "flame" | "petal">;
   updatedAt: string;
 };
@@ -23,10 +21,8 @@ const DEFAULT_PROFILE: StoredProfile = {
   preferredName: "",
   coins: 180,
   equippedSkin: "surangi-classic",
-  equippedHat: "cap",
   equippedTrail: "mint",
   unlockedSkins: ["surangi-classic", "turtle-classic"],
-  unlockedHats: ["none", "cap"],
   unlockedTrails: ["mint"],
   updatedAt: new Date(0).toISOString(),
 };
