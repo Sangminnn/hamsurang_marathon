@@ -15,13 +15,13 @@ export const CHARACTERS: Record<CharacterId, { label: string; emoji: string; ima
   surangi: {
     label: "수랑이",
     emoji: "🤍",
-    imagePath: "/assets/characters/surangi-main.svg",
+    imagePath: "/assets/characters/hamsurang_surang.png",
     sceneKey: "character-surangi",
   },
   turtle: {
     label: "거북이",
     emoji: "🐢",
-    imagePath: "/assets/characters/turtle-main.svg",
+    imagePath: "/assets/characters/hamsurang_turtle.png",
     sceneKey: "character-turtle",
   },
 };
