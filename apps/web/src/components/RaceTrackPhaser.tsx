@@ -20,10 +20,29 @@ type SceneSnapshot = {
 export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<{ refresh: (snapshot: SceneSnapshot) => void } | null>(null);
+  const playersRef = useRef(players);
+
+  useEffect(() => {
+    playersRef.current = players;
+  }, [players]);
 
   useEffect(() => {
     let destroyed = false;
-    let game: { destroy: (removeCanvas: boolean, noReturn?: boolean) => void } | null = null;
+    let game: {
+      destroy: (removeCanvas: boolean, noReturn?: boolean) => void;
+      scale?: { resize: (width: number, height: number) => void };
+    } | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+
+    function getSceneSize() {
+      const hostWidth = hostRef.current?.clientWidth ?? 360;
+      const isMobile = window.innerWidth < 768;
+      const width = Math.max(320, hostWidth);
+      return {
+        width,
+        height: isMobile ? Math.round(width * 1.18) : Math.round(width * 0.62),
+      };
+    }
 
     async function bootstrap() {
       const Phaser = await import("phaser");
@@ -161,26 +180,38 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
         refresh: (snapshot) => scene.refresh(snapshot),
       };
 
+      const initialSize = getSceneSize();
+
       game = new Phaser.Game({
         type: Phaser.AUTO,
-        width: 760,
-        height: 560,
+        width: initialSize.width,
+        height: initialSize.height,
         parent: hostRef.current,
         transparent: true,
         scene,
-        scale: {
-          mode: Phaser.Scale.WIDTH_CONTROLS_HEIGHT,
-          autoCenter: Phaser.Scale.CENTER_BOTH,
-        },
+        scale: { mode: Phaser.Scale.NONE, autoCenter: Phaser.Scale.CENTER_BOTH },
       });
 
       sceneRef.current.refresh({ players });
+
+      resizeObserver = new ResizeObserver(() => {
+        if (!game?.scale || !sceneRef.current) {
+          return;
+        }
+
+        const nextSize = getSceneSize();
+        game.scale.resize(nextSize.width, nextSize.height);
+        sceneRef.current.refresh({ players: playersRef.current });
+      });
+
+      resizeObserver.observe(hostRef.current);
     }
 
     bootstrap();
 
     return () => {
       destroyed = true;
+      resizeObserver?.disconnect();
       sceneRef.current = null;
       game?.destroy(true);
     };

@@ -45,13 +45,13 @@ button {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 18px;
-  padding: 18px 14px 20px;
+  gap: 14px;
+  padding: 14px 12px 18px;
 }
 
 .race-page-header {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .race-page-copy {
@@ -75,15 +75,15 @@ button {
 
 .race-page-hud {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .race-hud-card {
   display: grid;
   gap: 4px;
-  padding: 14px;
-  border-radius: 20px;
+  padding: 12px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.84);
   border: 1px solid rgba(113, 154, 129, 0.14);
   box-shadow: 0 14px 28px rgba(42, 78, 62, 0.08);
@@ -95,7 +95,7 @@ button {
 }
 
 .race-hud-card strong {
-  font-size: 1.2rem;
+  font-size: 1.08rem;
   line-height: 1.1;
 }
 
@@ -104,20 +104,24 @@ button {
   color: white;
 }
 
+.race-page-hud > .race-hud-card:first-child {
+  grid-column: 1 / -1;
+}
+
 .race-hud-card-accent span {
   color: rgba(255, 255, 255, 0.78);
 }
 
 .race-stage-full {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   align-content: start;
 }
 
 .race-arena-panel,
 .race-sidebar > * {
-  padding: 14px;
-  border-radius: 24px;
+  padding: 12px;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(103, 145, 123, 0.18);
   box-shadow: 0 18px 34px rgba(52, 86, 69, 0.08);
@@ -126,7 +130,7 @@ button {
 
 .race-sidebar {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .race-standings-list {
@@ -1153,9 +1157,9 @@ button {
 
 .phaser-stage {
   width: 100%;
-  min-height: 420px;
+  min-height: 0;
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 20px;
   border: 1px solid rgba(113, 154, 129, 0.14);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(239, 248, 242, 0.9));
 }
@@ -1168,16 +1172,16 @@ button {
 }
 
 .input-deck-large {
-  gap: 14px;
+  gap: 10px;
   margin: 0;
 }
 
 .tap-button {
-  min-height: 108px;
-  border-radius: 24px;
+  min-height: 88px;
+  border-radius: 20px;
   background: linear-gradient(180deg, #18392f, #2f7f63);
   color: white;
-  font-size: 1.08rem;
+  font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.06em;
 }
@@ -1222,6 +1226,53 @@ button {
 }
 
 @media (min-width: 768px) {
+  .race-page {
+    width: min(100%, 1360px);
+    margin: 0 auto;
+    gap: 18px;
+    padding: 24px 20px 28px;
+  }
+
+  .race-page-header {
+    gap: 16px;
+  }
+
+  .race-page-hud {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .race-page-hud > .race-hud-card:first-child {
+    grid-column: auto;
+  }
+
+  .race-hud-card {
+    padding: 16px 18px;
+    border-radius: 22px;
+  }
+
+  .race-hud-card strong {
+    font-size: 1.28rem;
+  }
+
+  .race-stage-full {
+    grid-template-columns: minmax(0, 1.7fr) minmax(300px, 360px);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .race-arena-panel,
+  .race-sidebar > * {
+    padding: 18px;
+    border-radius: 28px;
+  }
+
+  .race-sidebar {
+    gap: 16px;
+    position: sticky;
+    top: 24px;
+  }
+
   .app-shell {
     padding: 36px 20px 56px;
   }
@@ -1414,7 +1465,6 @@ button {
   }
 
   .phaser-stage {
-    min-height: 320px;
     border-radius: 24px;
   }
 
@@ -1422,10 +1472,14 @@ button {
     gap: 14px;
   }
 
+  .input-deck-large {
+    gap: 14px;
+  }
+
   .tap-button {
     min-height: 112px;
     border-radius: 24px;
-    font-size: 1.2rem;
+    font-size: 1.16rem;
   }
 }
 
