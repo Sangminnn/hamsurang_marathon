@@ -26,6 +26,7 @@ import {
 type RoomPhase = "lobby" | "countdown" | "racing" | "results";
 type GameMode = "sprint";
 type InputDirection = "left" | "right";
+type CustomizingTab = "skins" | "hats" | "trails";
 
 type PlayerSnapshot = {
   renderKey: string;
@@ -284,6 +285,8 @@ export function App() {
   const [countdownLabel, setCountdownLabel] = useState("3s");
   const [raceLabel, setRaceLabel] = useState("30s");
   const [toast, setToast] = useState("");
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [customizingTab, setCustomizingTab] = useState<CustomizingTab>("skins");
   const [roomSnapshot, setRoomSnapshot] = useState<RoomSnapshot | null>(null);
   const [activeRooms, setActiveRooms] = useState<ActiveRoom[]>([]);
   const [connectionState, setConnectionState] = useState<"idle" | "connecting" | "connected">("idle");
@@ -650,6 +653,15 @@ export function App() {
 
   function startSoloPreview() {
     roomRef.current?.send("startSoloPreview");
+  }
+
+  function openCustomizer(tab: CustomizingTab) {
+    setCustomizingTab(tab);
+    setIsCustomizerOpen(true);
+  }
+
+  function closeCustomizer() {
+    setIsCustomizerOpen(false);
   }
 
   async function closeRoomByAdmin(roomId: string) {
@@ -1085,106 +1097,36 @@ export function App() {
                       ))}
                     </div>
 
-                    <div className="locker-grid">
-                      <div className="locker-column">
-                        <div className="section-copy">
-                          <p className="panel-title">캐릭터 스킨</p>
-                          <p>{CHARACTERS[selectedCharacterId].label} 전용 베리에이션을 해금하고 출전 스킨으로 장착하세요.</p>
+                    <div className="customizer-summary-grid">
+                      <button type="button" className="customizer-entry" onClick={() => openCustomizer("skins")}>
+                        <div className="customizer-entry-copy">
+                          <span className="summary-label">캐릭터 스킨</span>
+                          <strong>{equippedSkinMeta.label}</strong>
+                          <p>{selectedCharacterSkins.length}개 스킨 중 선택 가능</p>
                         </div>
-                        <div className="cosmetic-list">
-                          {selectedCharacterSkins.map((skin) => {
-                            const unlocked = profile.unlockedSkins.includes(skin.id);
-                            const equipped = profile.equippedSkin === skin.id;
-
-                            return (
-                              <button
-                                key={skin.id}
-                                type="button"
-                                className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
-                                onClick={() => unlockOrEquipSkin(skin.id)}
-                              >
-                                <div className="cosmetic-copy cosmetic-copy-with-thumb">
-                                  <CharacterArt className="cosmetic-thumb" skinId={skin.id} size={44} alt={skin.label} />
-                                  <div>
-                                    <strong>
-                                      {skin.label} <span className="cosmetic-inline-badge">{skin.badge}</span>
-                                    </strong>
-                                    <p>{unlocked ? skin.subtitle : `${skin.price} 코인으로 ${skin.subtitle} 해금`}</p>
-                                  </div>
-                                </div>
-                                <span className="progress-pill">
-                                  {equipped ? "출전 중" : unlocked ? "장착" : `${skin.price}C`}
-                                </span>
-                              </button>
-                            );
-                          })}
+                        <CharacterArt className="customizer-entry-art" skinId={profile.equippedSkin} size={64} alt={equippedSkinMeta.label} />
+                      </button>
+                      <button type="button" className="customizer-entry" onClick={() => openCustomizer("hats")}>
+                        <div className="customizer-entry-copy">
+                          <span className="summary-label">모자 꾸미기</span>
+                          <strong>{getHatMeta(profile.equippedHat).label}</strong>
+                          <p>장착 중인 모자와 구매 가능한 모자를 확인하세요</p>
                         </div>
-                      </div>
-
-                      <div className="locker-column">
-                        <div className="section-copy">
-                          <p className="panel-title">모자 꾸미기</p>
-                          <p>코인으로 해금하고 바로 장착할 수 있습니다.</p>
+                        <span className="customizer-entry-icon">{getHatMeta(profile.equippedHat).emoji}</span>
+                      </button>
+                      <button type="button" className="customizer-entry" onClick={() => openCustomizer("trails")}>
+                        <div className="customizer-entry-copy">
+                          <span className="summary-label">트레일 이펙트</span>
+                          <strong>{getTrailMeta(profile.equippedTrail).label}</strong>
+                          <p>레이스 중 남는 효과를 바꿔보세요</p>
                         </div>
-                        <div className="cosmetic-list">
-                          {HATS.map((hat) => {
-                            const unlocked = profile.unlockedHats.includes(hat.id);
-                            const equipped = profile.equippedHat === hat.id;
-
-                            return (
-                              <button
-                                key={hat.id}
-                                type="button"
-                                className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
-                                onClick={() => unlockOrEquipHat(hat.id)}
-                              >
-                                <div className="cosmetic-copy">
-                                  <strong>
-                                    {hat.emoji} {hat.label}
-                                  </strong>
-                                  <p>{unlocked ? "즉시 장착 가능" : `${hat.price} 코인으로 해금`}</p>
-                                </div>
-                                <span className="progress-pill">
-                                  {equipped ? "장착 중" : unlocked ? "장착" : `${hat.price}C`}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="locker-column">
-                        <div className="section-copy">
-                          <p className="panel-title">트레일 꾸미기</p>
-                          <p>레이스 중 캐릭터 뒤에 남는 효과입니다.</p>
-                        </div>
-                        <div className="cosmetic-list">
-                          {TRAILS.map((trail) => {
-                            const unlocked = profile.unlockedTrails.includes(trail.id);
-                            const equipped = profile.equippedTrail === trail.id;
-
-                            return (
-                              <button
-                                key={trail.id}
-                                type="button"
-                                className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
-                                onClick={() => unlockOrEquipTrail(trail.id)}
-                              >
-                                <div className="cosmetic-copy">
-                                  <strong>
-                                    {trail.emoji} {trail.label}
-                                  </strong>
-                                  <p>{unlocked ? "즉시 장착 가능" : `${trail.price} 코인으로 해금`}</p>
-                                </div>
-                                <span className="progress-pill">
-                                  {equipped ? "장착 중" : unlocked ? "장착" : `${trail.price}C`}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
+                        <span className="customizer-entry-icon">{getTrailMeta(profile.equippedTrail).emoji}</span>
+                      </button>
                     </div>
+
+                    <button type="button" className="secondary-button" onClick={() => openCustomizer("skins")}>
+                      커스터마이즈 열기
+                    </button>
                   </div>
 
                   <div className="panel inset">
@@ -1379,6 +1321,136 @@ export function App() {
                   <button type="button" className="tap-button" onPointerDown={() => sendInput("right")}>
                     RIGHT
                   </button>
+                </div>
+              </section>
+            ) : null}
+
+            {isCustomizerOpen ? (
+              <section className="modal-shell" aria-label="커스터마이즈">
+                <button type="button" className="modal-backdrop" aria-label="닫기" onClick={closeCustomizer} />
+                <div className="modal-panel">
+                  <div className="modal-head">
+                    <div className="section-copy">
+                      <p className="panel-title">커스터마이즈</p>
+                      <p>스킨, 모자, 트레일을 한 곳에서 구매하고 바로 출전 세팅에 반영하세요.</p>
+                    </div>
+                    <button type="button" className="ghost-button compact-button" onClick={closeCustomizer}>
+                      닫기
+                    </button>
+                  </div>
+
+                  <div className="modal-tab-row">
+                    <button
+                      type="button"
+                      className={customizingTab === "skins" ? "choice-meta modal-tab active" : "choice-meta modal-tab"}
+                      onClick={() => setCustomizingTab("skins")}
+                    >
+                      스킨
+                    </button>
+                    <button
+                      type="button"
+                      className={customizingTab === "hats" ? "choice-meta modal-tab active" : "choice-meta modal-tab"}
+                      onClick={() => setCustomizingTab("hats")}
+                    >
+                      모자
+                    </button>
+                    <button
+                      type="button"
+                      className={customizingTab === "trails" ? "choice-meta modal-tab active" : "choice-meta modal-tab"}
+                      onClick={() => setCustomizingTab("trails")}
+                    >
+                      트레일
+                    </button>
+                  </div>
+
+                  <div className="modal-body">
+                    {customizingTab === "skins" ? (
+                      <div className="cosmetic-list">
+                        {selectedCharacterSkins.map((skin) => {
+                          const unlocked = profile.unlockedSkins.includes(skin.id);
+                          const equipped = profile.equippedSkin === skin.id;
+
+                          return (
+                            <button
+                              key={skin.id}
+                              type="button"
+                              className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
+                              onClick={() => unlockOrEquipSkin(skin.id)}
+                            >
+                              <div className="cosmetic-copy cosmetic-copy-with-thumb">
+                                <CharacterArt className="cosmetic-thumb" skinId={skin.id} size={52} alt={skin.label} />
+                                <div>
+                                  <strong>
+                                    {skin.label} <span className="cosmetic-inline-badge">{skin.badge}</span>
+                                  </strong>
+                                  <p>{unlocked ? skin.subtitle : `${skin.price} 코인으로 ${skin.subtitle} 해금`}</p>
+                                </div>
+                              </div>
+                              <span className="progress-pill">
+                                {equipped ? "출전 중" : unlocked ? "장착" : `${skin.price}C`}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+
+                    {customizingTab === "hats" ? (
+                      <div className="cosmetic-list">
+                        {HATS.map((hat) => {
+                          const unlocked = profile.unlockedHats.includes(hat.id);
+                          const equipped = profile.equippedHat === hat.id;
+
+                          return (
+                            <button
+                              key={hat.id}
+                              type="button"
+                              className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
+                              onClick={() => unlockOrEquipHat(hat.id)}
+                            >
+                              <div className="cosmetic-copy">
+                                <strong>
+                                  {hat.emoji} {hat.label}
+                                </strong>
+                                <p>{unlocked ? "즉시 장착 가능" : `${hat.price} 코인으로 해금`}</p>
+                              </div>
+                              <span className="progress-pill">
+                                {equipped ? "장착 중" : unlocked ? "장착" : `${hat.price}C`}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+
+                    {customizingTab === "trails" ? (
+                      <div className="cosmetic-list">
+                        {TRAILS.map((trail) => {
+                          const unlocked = profile.unlockedTrails.includes(trail.id);
+                          const equipped = profile.equippedTrail === trail.id;
+
+                          return (
+                            <button
+                              key={trail.id}
+                              type="button"
+                              className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
+                              onClick={() => unlockOrEquipTrail(trail.id)}
+                            >
+                              <div className="cosmetic-copy">
+                                <strong>
+                                  {trail.emoji} {trail.label}
+                                </strong>
+                                <p>{unlocked ? "즉시 장착 가능" : `${trail.price} 코인으로 해금`}</p>
+                              </div>
+                              <span className="progress-pill">
+                                {equipped ? "장착 중" : unlocked ? "장착" : `${trail.price}C`}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </section>
             ) : null}

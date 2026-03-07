@@ -477,6 +477,47 @@ button {
   margin-top: 14px;
 }
 
+.customizer-summary-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+
+.customizer-entry {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 16px;
+  border-radius: 20px;
+  background: white;
+  border: 1px solid rgba(113, 154, 129, 0.12);
+  text-align: left;
+}
+
+.customizer-entry-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.customizer-entry-copy p {
+  margin: 0;
+  color: #648279;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.customizer-entry-art {
+  filter: drop-shadow(0 10px 18px rgba(34, 74, 59, 0.08));
+}
+
+.customizer-entry-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
 .locker-column {
   display: grid;
   gap: 12px;
@@ -857,6 +898,60 @@ button {
 .result-copy strong {
   font-size: 0.98rem;
   line-height: 1.25;
+}
+
+.modal-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  align-items: end;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 26, 21, 0.42);
+}
+
+.modal-panel {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  max-height: min(82vh, 760px);
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  border-radius: 28px 28px 0 0;
+  background: #f5fbf7;
+  box-shadow: 0 -18px 48px rgba(18, 40, 31, 0.16);
+}
+
+.modal-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.modal-tab-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.modal-tab {
+  justify-content: center;
+  min-height: 40px;
+  border: 1px solid transparent;
+}
+
+.modal-tab.active {
+  background: #2f7f63;
+  color: white;
+}
+
+.modal-body {
+  overflow: auto;
+  padding-right: 2px;
 }
 
 .track-meta {
