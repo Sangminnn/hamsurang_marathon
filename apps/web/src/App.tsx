@@ -1,6 +1,7 @@
 import { startTransition, useEffect, useRef, useState } from "react";
 
 import { Client, Room } from "colyseus.js";
+import { toast as sonnerToast } from "sonner";
 
 import { CharacterArt } from "./components/CharacterArt";
 import { RaceTrackPhaser } from "./components/RaceTrackPhaser";
@@ -742,6 +743,9 @@ export function App() {
       if (!current.unlockedHats.includes(hatId)) {
         if (current.coins < hat.price) {
           setToast("코인이 부족합니다.");
+          sonnerToast.error("코인이 부족합니다", {
+            description: `${hat.label} 해금에는 ${hat.price}코인이 필요합니다. 현재 보유 코인은 ${current.coins}입니다.`,
+          });
           return current;
         }
 
@@ -770,6 +774,9 @@ export function App() {
       if (!current.unlockedSkins.includes(skinId)) {
         if (current.coins < skin.price) {
           setToast("코인이 부족합니다.");
+          sonnerToast.error("리워드가 부족합니다", {
+            description: `${skin.label} 구매에는 ${skin.price}코인이 필요합니다. 현재 보유 코인은 ${current.coins}입니다.`,
+          });
           return current;
         }
 
@@ -801,6 +808,9 @@ export function App() {
       if (!current.unlockedTrails.includes(trailId)) {
         if (current.coins < trail.price) {
           setToast("코인이 부족합니다.");
+          sonnerToast.error("코인이 부족합니다", {
+            description: `${trail.label} 해금에는 ${trail.price}코인이 필요합니다. 현재 보유 코인은 ${current.coins}입니다.`,
+          });
           return current;
         }
 
