@@ -58,24 +58,6 @@ export const CHARACTERS: Record<CharacterId, { label: string; emoji: string; ima
   },
 };
 
-const SURANG_IMAGESET_PATH = "/assets/characters/surang_imageset.png";
-const SURANG_CELL_SIZE = 299;
-
-function getSurangSheetArt(column: number, row = 0): ArtSource {
-  return {
-    kind: "sheet",
-    imagePath: SURANG_IMAGESET_PATH,
-    crop: {
-      x: column * SURANG_CELL_SIZE,
-      y: row * SURANG_CELL_SIZE,
-      width: SURANG_CELL_SIZE,
-      height: SURANG_CELL_SIZE,
-    },
-    sheetWidth: 2392,
-    sheetHeight: 1792,
-  };
-}
-
 export const SKINS: Array<{
   id: SkinId;
   characterId: CharacterId;
@@ -96,7 +78,10 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#f3a68f",
     badge: "기본",
-    art: getSurangSheetArt(0, 0),
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_variants/surangi-classic.png",
+    },
   },
   {
     id: "surangi-detective",
@@ -107,7 +92,10 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#5f84c9",
     badge: "인기",
-    art: getSurangSheetArt(1, 0),
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_variants/surangi-detective.png",
+    },
   },
   {
     id: "surangi-rainbow",
@@ -118,7 +106,10 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d96fd6",
     badge: "인기",
-    art: getSurangSheetArt(2, 0),
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_variants/surangi-rainbow.png",
+    },
   },
   {
     id: "surangi-mechanic",
@@ -129,7 +120,10 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#646b75",
     badge: "희귀",
-    art: getSurangSheetArt(3, 0),
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_variants/surangi-mechanic.png",
+    },
   },
   {
     id: "surangi-sun",
@@ -140,7 +134,10 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#f1b93a",
     badge: "신규",
-    art: getSurangSheetArt(4, 0),
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_variants/surangi-sun.png",
+    },
   },
   {
     id: "surangi-skater",
@@ -151,7 +148,10 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#ef8a3b",
     badge: "시그니처",
-    art: getSurangSheetArt(5, 0),
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_variants/surangi-skater.png",
+    },
   },
   {
     id: "surangi-snack",
@@ -162,7 +162,10 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#8f8f8f",
     badge: "한정",
-    art: getSurangSheetArt(6, 0),
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_variants/surangi-snack.png",
+    },
   },
   {
     id: "surangi-soccer",
@@ -173,7 +176,10 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d69d34",
     badge: "희귀",
-    art: getSurangSheetArt(7, 0),
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_variants/surangi-soccer.png",
+    },
   },
   {
     id: "turtle-classic",
