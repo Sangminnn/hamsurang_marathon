@@ -500,11 +500,17 @@ export function App() {
       const authRoom = await client.joinOrCreate("auth", {
         nickname: playerName.trim(),
       });
-      const authState = (authRoom.state as { toJSON?: () => { playerId?: string; nickname?: string; isNewUser?: boolean } })?.toJSON?.() ?? {};
 
-      if (!authState.playerId) {
-        throw new Error("로그인 정보를 받지 못했습니다.");
-      }
+      const authState = await new Promise<{ playerId: string; nickname?: string; isNewUser?: boolean }>((resolve, reject) => {
+        const timeoutId = window.setTimeout(() => {
+          reject(new Error("로그인 응답이 지연되고 있습니다."));
+        }, 2000);
+
+        authRoom.onMessage("authenticated", (message) => {
+          window.clearTimeout(timeoutId);
+          resolve(message as { playerId: string; nickname?: string; isNewUser?: boolean });
+        });
+      });
 
       const nextAuth = {
         playerId: authState.playerId,
