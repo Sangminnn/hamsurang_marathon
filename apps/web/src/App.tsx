@@ -8,6 +8,7 @@ import { RaceTrackPhaser } from "./components/RaceTrackPhaser";
 import {
   CHARACTERS,
   DEFAULT_PROFILE,
+  FREE_SKIN_IDS,
   SKINS,
   TRAILS,
   getCharacterSkins,
@@ -112,6 +113,11 @@ function normalizeSkinId(value: string | undefined, fallbackCharacterId: Charact
     : getDefaultSkinForCharacter(fallbackCharacterId);
 }
 
+function normalizeUnlockedSkinIds(skinIds: string[] | undefined) {
+  const merged = Array.from(new Set([...(skinIds ?? []), ...FREE_SKIN_IDS]));
+  return merged.map((skinId) => normalizeSkinId(skinId, "surangi"));
+}
+
 function normalizeTrailId(value: string | undefined): TrailId {
   return TRAILS.some((trail) => trail.id === value) ? (value as TrailId) : "mint";
 }
@@ -200,9 +206,7 @@ function loadProfile() {
       coins: parsed.coins ?? memoryProfile.coins,
       equippedSkin: normalizeSkinId(parsed.equippedSkin, "surangi"),
       equippedTrail: normalizeTrailId(parsed.equippedTrail),
-      unlockedSkins: (parsed.unlockedSkins ?? memoryProfile.unlockedSkins).map((skinId) =>
-        normalizeSkinId(skinId, "surangi"),
-      ),
+      unlockedSkins: normalizeUnlockedSkinIds(parsed.unlockedSkins ?? memoryProfile.unlockedSkins),
       unlockedTrails: (parsed.unlockedTrails ?? memoryProfile.unlockedTrails).map(normalizeTrailId),
     };
   } catch {
@@ -318,9 +322,7 @@ export function App() {
           coins: nextProfile.coins ?? DEFAULT_PROFILE.coins,
           equippedSkin: normalizedEquippedSkin,
           equippedTrail: normalizeTrailId(nextProfile.equippedTrail),
-          unlockedSkins: (nextProfile.unlockedSkins ?? DEFAULT_PROFILE.unlockedSkins).map((skinId) =>
-            normalizeSkinId(skinId, "surangi"),
-          ),
+          unlockedSkins: normalizeUnlockedSkinIds(nextProfile.unlockedSkins ?? DEFAULT_PROFILE.unlockedSkins),
           unlockedTrails: (nextProfile.unlockedTrails ?? DEFAULT_PROFILE.unlockedTrails).map(normalizeTrailId),
         });
         setCharacterId(getSkinMeta(normalizedEquippedSkin).characterId);

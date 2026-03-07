@@ -10,6 +10,44 @@ import { closeRoom, listRooms } from "./rooms/roomRegistry.js";
 import { getProfile, saveProfile } from "./storage/profileStore.js";
 
 const PORT = Number(process.env.PORT ?? 2567);
+const FREE_SKIN_IDS = [
+  "surangi-classic",
+  "surangi-detective",
+  "surangi-rainbow",
+  "surangi-mechanic",
+  "surangi-sun",
+  "surangi-skater",
+  "surangi-explorer",
+  "surangi-farmer",
+  "surangi-blossom",
+  "surangi-headset",
+  "surangi-chef",
+  "surangi-runner",
+  "surangi-winter",
+  "surangi-pilot",
+  "surangi-banker",
+  "surangi-cadet",
+  "turtle-classic",
+  "turtle-coder",
+  "turtle-sprint",
+  "turtle-writer",
+  "turtle-accountant",
+  "turtle-filmmaker",
+  "turtle-graffiti",
+  "turtle-chef-white",
+  "turtle-medalist",
+  "turtle-firefighter",
+  "turtle-diver",
+  "turtle-rose-agent",
+  "turtle-gardener",
+  "turtle-builder",
+  "turtle-headset",
+  "turtle-scholar",
+  "turtle-architect",
+  "turtle-chef-green",
+  "turtle-arcade",
+  "turtle-painter",
+] as const;
 
 const app = express();
 app.use(cors());
@@ -48,7 +86,7 @@ app.put("/api/profile/:playerId", async (request, response) => {
     coins: Math.max(0, Number(body.coins ?? 0)),
     equippedSkin: body.equippedSkin ?? "surangi-classic",
     equippedTrail: body.equippedTrail ?? "mint",
-    unlockedSkins: Array.from(new Set(body.unlockedSkins ?? ["surangi-classic", "turtle-classic"])),
+    unlockedSkins: Array.from(new Set([...(body.unlockedSkins ?? []), ...FREE_SKIN_IDS])),
     unlockedTrails: Array.from(new Set(body.unlockedTrails ?? ["mint"])),
   });
 

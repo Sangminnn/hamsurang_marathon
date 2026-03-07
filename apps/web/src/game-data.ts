@@ -29,28 +29,46 @@ export type ArtSource =
       sheetHeight: number;
     };
 
-const SURANG_SHEET_PATH = "/assets/characters/surang_only_remove_bg.png";
-const SURANG_SHEET_WIDTH = 2292;
-const SURANG_SHEET_HEIGHT = 874;
-const HAMBUGI_SHEET_PATH = "/assets/characters/hambugi_remove_bg.png";
-const HAMBUGI_SHEET_WIDTH = 2274;
-const HAMBUGI_SHEET_HEIGHT = 866;
+const SURANG_SHEET_PATH = "/assets/characters/surang_only_remove_bg-Photoroom.png";
+const SURANG_SOURCE_WIDTH = 2292;
+const SURANG_SOURCE_HEIGHT = 874;
+const SURANG_SHEET_WIDTH = 1280;
+const SURANG_SHEET_HEIGHT = 488;
+const HAMBUGI_SHEET_PATH = "/assets/characters/hambugi_remove_bg-Photoroom.png";
+const HAMBUGI_SOURCE_WIDTH = 2274;
+const HAMBUGI_SOURCE_HEIGHT = 866;
+const HAMBUGI_SHEET_WIDTH = 1280;
+const HAMBUGI_SHEET_HEIGHT = 487;
 
 function surangSheetCrop(x: number, y: number, width: number, height: number): ArtSource {
+  const scaleX = SURANG_SHEET_WIDTH / SURANG_SOURCE_WIDTH;
+  const scaleY = SURANG_SHEET_HEIGHT / SURANG_SOURCE_HEIGHT;
   return {
     kind: "sheet",
     imagePath: SURANG_SHEET_PATH,
-    crop: { x, y, width, height },
+    crop: {
+      x: Math.round(x * scaleX),
+      y: Math.round(y * scaleY),
+      width: Math.round(width * scaleX),
+      height: Math.round(height * scaleY),
+    },
     sheetWidth: SURANG_SHEET_WIDTH,
     sheetHeight: SURANG_SHEET_HEIGHT,
   };
 }
 
 function hambugiSheetCrop(x: number, y: number, width: number, height: number): ArtSource {
+  const scaleX = HAMBUGI_SHEET_WIDTH / HAMBUGI_SOURCE_WIDTH;
+  const scaleY = HAMBUGI_SHEET_HEIGHT / HAMBUGI_SOURCE_HEIGHT;
   return {
     kind: "sheet",
     imagePath: HAMBUGI_SHEET_PATH,
-    crop: { x, y, width, height },
+    crop: {
+      x: Math.round(x * scaleX),
+      y: Math.round(y * scaleY),
+      width: Math.round(width * scaleX),
+      height: Math.round(height * scaleY),
+    },
     sheetWidth: HAMBUGI_SHEET_WIDTH,
     sheetHeight: HAMBUGI_SHEET_HEIGHT,
   };
@@ -64,14 +82,14 @@ export const CHARACTERS: Record<CharacterId, { label: string; emoji: string; ima
     sceneKey: "character-surangi",
   },
   turtle: {
-    label: "거북이",
+    label: "함부기",
     emoji: "🐢",
     imagePath: HAMBUGI_SHEET_PATH,
     sceneKey: "character-turtle",
   },
 };
 
-export const SKINS: Array<{
+const BASE_SKINS: Array<{
   id: SkinId;
   characterId: CharacterId;
   label: string;
@@ -135,7 +153,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#f1b93a",
     badge: "신규",
-    art: surangSheetCrop(1130, 0, 315, 292),
+    art: surangSheetCrop(1450, 10, 240, 280),
   },
   {
     id: "surangi-skater",
@@ -146,7 +164,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#ef8a3b",
     badge: "시그니처",
-    art: surangSheetCrop(1410, 0, 330, 292),
+    art: surangSheetCrop(1735, 12, 250, 270),
   },
   {
     id: "surangi-explorer",
@@ -157,7 +175,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#5f9a86",
     badge: "신규",
-    art: surangSheetCrop(0, 290, 320, 320),
+    art: surangSheetCrop(8, 315, 280, 270),
   },
   {
     id: "surangi-farmer",
@@ -179,7 +197,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#e28a2a",
     badge: "희귀",
-    art: surangSheetCrop(570, 290, 330, 320),
+    art: surangSheetCrop(635, 308, 255, 285),
   },
   {
     id: "surangi-blossom",
@@ -190,7 +208,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d5798c",
     badge: "인기",
-    art: surangSheetCrop(860, 290, 330, 320),
+    art: surangSheetCrop(895, 315, 285, 285),
   },
   {
     id: "surangi-headset",
@@ -201,7 +219,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#9a82d8",
     badge: "인기",
-    art: surangSheetCrop(1140, 290, 320, 320),
+    art: surangSheetCrop(1190, 315, 245, 270),
   },
   {
     id: "surangi-dj",
@@ -212,7 +230,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#a06cd5",
     badge: "시그니처",
-    art: surangSheetCrop(1930, 290, 362, 320),
+    art: surangSheetCrop(2028, 315, 240, 270),
   },
   {
     id: "surangi-chef",
@@ -223,7 +241,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d96c63",
     badge: "인기",
-    art: surangSheetCrop(250, 580, 340, 294),
+    art: surangSheetCrop(305, 610, 220, 255),
   },
   {
     id: "surangi-astronaut",
@@ -234,7 +252,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#7f90d4",
     badge: "전설",
-    art: surangSheetCrop(560, 580, 320, 294),
+    art: surangSheetCrop(635, 612, 220, 270),
   },
   {
     id: "surangi-runner",
@@ -245,7 +263,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#f08f4e",
     badge: "신규",
-    art: surangSheetCrop(840, 580, 340, 294),
+    art: surangSheetCrop(892, 606, 275, 270),
   },
   {
     id: "surangi-winter",
@@ -256,7 +274,7 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#85c7d4",
     badge: "희귀",
-    art: surangSheetCrop(1120, 580, 340, 294),
+    art: surangSheetCrop(1190, 610, 260, 268),
   },
   {
     id: "surangi-pilot",
@@ -289,13 +307,13 @@ export const SKINS: Array<{
     tint: 0xffffff,
     accentColor: "#d6a13d",
     badge: "신규",
-    art: surangSheetCrop(1970, 580, 322, 294),
+    art: surangSheetCrop(2028, 610, 245, 268),
   },
   {
     id: "turtle-classic",
     characterId: "turtle",
-    label: "해커 거북이",
-    subtitle: "멀티 모니터 앞에 앉은 메인 거북이",
+    label: "함부기",
+    subtitle: "멀티 모니터 앞에 앉은 메인 함부기",
     price: 0,
     tint: 0xffffff,
     accentColor: "#8ea99b",
@@ -308,8 +326,8 @@ export const SKINS: Array<{
   {
     id: "turtle-coder",
     characterId: "turtle",
-    label: "분석가 거북이",
-    subtitle: "투명 테이블에서 데이터를 다루는 전략형 거북이",
+    label: "분석가 함부기",
+    subtitle: "투명 테이블에서 데이터를 다루는 전략형 함부기",
     price: 190,
     tint: 0xffffff,
     accentColor: "#7db486",
@@ -322,8 +340,8 @@ export const SKINS: Array<{
   {
     id: "turtle-sprint",
     characterId: "turtle",
-    label: "스트리머 거북이",
-    subtitle: "키보드 세팅이 강조된 퍼포먼스형 거북이",
+    label: "스트리머 함부기",
+    subtitle: "키보드 세팅이 강조된 퍼포먼스형 함부기",
     price: 220,
     tint: 0xffffff,
     accentColor: "#d56d5d",
@@ -336,8 +354,8 @@ export const SKINS: Array<{
   {
     id: "turtle-writer",
     characterId: "turtle",
-    label: "작가 거북이",
-    subtitle: "깃펜과 책상이 돋보이는 집중형 거북이",
+    label: "작가 함부기",
+    subtitle: "깃펜과 책상이 돋보이는 집중형 함부기",
     price: 180,
     tint: 0xffffff,
     accentColor: "#7d8f5b",
@@ -347,8 +365,8 @@ export const SKINS: Array<{
   {
     id: "turtle-accountant",
     characterId: "turtle",
-    label: "정산 거북이",
-    subtitle: "계산기와 영수증을 챙긴 재무형 거북이",
+    label: "정산 함부기",
+    subtitle: "계산기와 영수증을 챙긴 재무형 함부기",
     price: 170,
     tint: 0xffffff,
     accentColor: "#d0a33b",
@@ -361,8 +379,8 @@ export const SKINS: Array<{
   {
     id: "turtle-filmmaker",
     characterId: "turtle",
-    label: "필름메이커 거북이",
-    subtitle: "카메라 리그를 다루는 제작형 거북이",
+    label: "필름메이커 함부기",
+    subtitle: "카메라 리그를 다루는 제작형 함부기",
     price: 200,
     tint: 0xffffff,
     accentColor: "#8c63c9",
@@ -375,8 +393,8 @@ export const SKINS: Array<{
   {
     id: "turtle-graffiti",
     characterId: "turtle",
-    label: "그래피티 거북이",
-    subtitle: "벽화와 스프레이 콘셉트의 스트릿 거북이",
+    label: "그래피티 함부기",
+    subtitle: "벽화와 스프레이 콘셉트의 스트릿 함부기",
     price: 195,
     tint: 0xffffff,
     accentColor: "#59b9b5",
@@ -389,8 +407,8 @@ export const SKINS: Array<{
   {
     id: "turtle-dj",
     characterId: "turtle",
-    label: "DJ 거북이",
-    subtitle: "콘솔과 전화기 사이를 오가는 믹서형 거북이",
+    label: "DJ 함부기",
+    subtitle: "콘솔과 전화기 사이를 오가는 믹서형 함부기",
     price: 230,
     tint: 0xffffff,
     accentColor: "#d78a3d",
@@ -403,8 +421,8 @@ export const SKINS: Array<{
   {
     id: "turtle-spacewalk",
     characterId: "turtle",
-    label: "우주유영 거북이",
-    subtitle: "동료와 함께 출격하는 우주 탐사 거북이",
+    label: "우주유영 함부기",
+    subtitle: "동료와 함께 출격하는 우주 탐사 함부기",
     price: 240,
     tint: 0xffffff,
     accentColor: "#b8bbc9",
@@ -417,8 +435,8 @@ export const SKINS: Array<{
   {
     id: "turtle-chef-white",
     characterId: "turtle",
-    label: "화이트 셰프 거북이",
-    subtitle: "셰프 복장을 갖춘 주방형 거북이",
+    label: "화이트 셰프 함부기",
+    subtitle: "셰프 복장을 갖춘 주방형 함부기",
     price: 185,
     tint: 0xffffff,
     accentColor: "#d2d2d2",
@@ -431,8 +449,8 @@ export const SKINS: Array<{
   {
     id: "turtle-medalist",
     characterId: "turtle",
-    label: "메달리스트 거북이",
-    subtitle: "수상 포즈가 강조된 챔피언 거북이",
+    label: "메달리스트 함부기",
+    subtitle: "수상 포즈가 강조된 챔피언 함부기",
     price: 210,
     tint: 0xffffff,
     accentColor: "#d3af39",
@@ -445,8 +463,8 @@ export const SKINS: Array<{
   {
     id: "turtle-firefighter",
     characterId: "turtle",
-    label: "소방관 거북이",
-    subtitle: "호스를 든 현장형 거북이",
+    label: "소방관 함부기",
+    subtitle: "호스를 든 현장형 함부기",
     price: 205,
     tint: 0xffffff,
     accentColor: "#d55a3e",
@@ -456,8 +474,8 @@ export const SKINS: Array<{
   {
     id: "turtle-diver",
     characterId: "turtle",
-    label: "다이버 거북이",
-    subtitle: "잠수복과 장비가 완성된 심해 거북이",
+    label: "다이버 함부기",
+    subtitle: "잠수복과 장비가 완성된 심해 함부기",
     price: 220,
     tint: 0xffffff,
     accentColor: "#d28a2a",
@@ -467,8 +485,8 @@ export const SKINS: Array<{
   {
     id: "turtle-rose-agent",
     characterId: "turtle",
-    label: "로즈 에이전트 거북이",
-    subtitle: "장미와 마스크가 포인트인 미스터리 거북이",
+    label: "로즈 에이전트 함부기",
+    subtitle: "장미와 마스크가 포인트인 미스터리 함부기",
     price: 215,
     tint: 0xffffff,
     accentColor: "#5a5a5a",
@@ -478,8 +496,8 @@ export const SKINS: Array<{
   {
     id: "turtle-gardener",
     characterId: "turtle",
-    label: "가드너 거북이",
-    subtitle: "물뿌리개를 든 정원형 거북이",
+    label: "가드너 함부기",
+    subtitle: "물뿌리개를 든 정원형 함부기",
     price: 170,
     tint: 0xffffff,
     accentColor: "#79a85a",
@@ -489,8 +507,8 @@ export const SKINS: Array<{
   {
     id: "turtle-builder",
     characterId: "turtle",
-    label: "빌더 거북이",
-    subtitle: "망치와 공구 벨트를 장착한 거북이",
+    label: "빌더 함부기",
+    subtitle: "망치와 공구 벨트를 장착한 함부기",
     price: 200,
     tint: 0xffffff,
     accentColor: "#58b4b4",
@@ -500,8 +518,8 @@ export const SKINS: Array<{
   {
     id: "turtle-headset",
     characterId: "turtle",
-    label: "헤드셋 거북이",
-    subtitle: "오퍼레이터 감성의 퍼포먼스 거북이",
+    label: "헤드셋 함부기",
+    subtitle: "오퍼레이터 감성의 퍼포먼스 함부기",
     price: 190,
     tint: 0xffffff,
     accentColor: "#8d6ac6",
@@ -511,8 +529,8 @@ export const SKINS: Array<{
   {
     id: "turtle-scholar",
     characterId: "turtle",
-    label: "학자 거북이",
-    subtitle: "책상과 깃펜이 어울리는 연구형 거북이",
+    label: "학자 함부기",
+    subtitle: "책상과 깃펜이 어울리는 연구형 함부기",
     price: 175,
     tint: 0xffffff,
     accentColor: "#7d7b61",
@@ -525,8 +543,8 @@ export const SKINS: Array<{
   {
     id: "turtle-architect",
     characterId: "turtle",
-    label: "설계사 거북이",
-    subtitle: "블록 설계를 하는 전략형 거북이",
+    label: "설계사 함부기",
+    subtitle: "블록 설계를 하는 전략형 함부기",
     price: 180,
     tint: 0xffffff,
     accentColor: "#7da85f",
@@ -536,8 +554,8 @@ export const SKINS: Array<{
   {
     id: "turtle-astronaut",
     characterId: "turtle",
-    label: "우주비행사 거북이",
-    subtitle: "화이트 수트 버전의 솔로 우주 거북이",
+    label: "우주비행사 함부기",
+    subtitle: "화이트 수트 버전의 솔로 우주 함부기",
     price: 235,
     tint: 0xffffff,
     accentColor: "#c0c8d9",
@@ -547,8 +565,8 @@ export const SKINS: Array<{
   {
     id: "turtle-chef-green",
     characterId: "turtle",
-    label: "그린 셰프 거북이",
-    subtitle: "숟가락을 든 셰프 콘셉트 거북이",
+    label: "그린 셰프 함부기",
+    subtitle: "숟가락을 든 셰프 콘셉트 함부기",
     price: 180,
     tint: 0xffffff,
     accentColor: "#87a860",
@@ -558,8 +576,8 @@ export const SKINS: Array<{
   {
     id: "turtle-arcade",
     characterId: "turtle",
-    label: "아케이드 거북이",
-    subtitle: "게임기 앞에 선 플레이어 거북이",
+    label: "아케이드 함부기",
+    subtitle: "게임기 앞에 선 플레이어 함부기",
     price: 205,
     tint: 0xffffff,
     accentColor: "#5c8fc7",
@@ -569,8 +587,8 @@ export const SKINS: Array<{
   {
     id: "turtle-painter",
     characterId: "turtle",
-    label: "페인터 거북이",
-    subtitle: "앞치마와 베레모가 포인트인 아티스트 거북이",
+    label: "페인터 함부기",
+    subtitle: "앞치마와 베레모가 포인트인 아티스트 함부기",
     price: 185,
     tint: 0xffffff,
     accentColor: "#78a764",
@@ -578,6 +596,28 @@ export const SKINS: Array<{
     art: hambugiSheetCrop(1910, 450, 364, 416),
   },
 ];
+
+export const PREMIUM_SKIN_IDS = [
+  "surangi-diver",
+  "surangi-dj",
+  "surangi-astronaut",
+  "turtle-dj",
+  "turtle-spacewalk",
+  "turtle-astronaut",
+] as const;
+
+const PREMIUM_SKIN_ID_SET = new Set<string>(PREMIUM_SKIN_IDS);
+
+export const SKINS = BASE_SKINS.map((skin) =>
+  PREMIUM_SKIN_ID_SET.has(skin.id)
+    ? skin
+    : {
+        ...skin,
+        price: 0,
+      },
+);
+
+export const FREE_SKIN_IDS = SKINS.filter((skin) => skin.price === 0).map((skin) => skin.id);
 
 export const TRAILS: Array<{
   id: TrailId;
@@ -597,7 +637,7 @@ export const DEFAULT_PROFILE: CosmeticProfile = {
   coins: 180,
   equippedSkin: "surangi-classic",
   equippedTrail: "mint",
-  unlockedSkins: ["surangi-classic", "turtle-classic"],
+  unlockedSkins: FREE_SKIN_IDS,
   unlockedTrails: ["mint"],
 };
 
