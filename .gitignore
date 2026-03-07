@@ -1,0 +1,13 @@
+node_modules/
+.pnpm-store/
+
+dist/
+**/dist/
+coverage/
+
+.DS_Store
+.env
+.env.local
+.env.*.local
+
+apps/server/data/*.tmp
