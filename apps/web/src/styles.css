@@ -917,6 +917,7 @@ button {
 .modal-panel {
   position: relative;
   display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 14px;
   max-height: min(82vh, 760px);
   padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
@@ -950,8 +951,12 @@ button {
 }
 
 .modal-body {
+  min-height: 0;
   overflow: auto;
   padding-right: 2px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .track-meta {
