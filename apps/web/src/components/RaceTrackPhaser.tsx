@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { CHARACTERS, getHatMeta, getSkinMeta, getTrailMeta, type ArtSource, type CharacterId, type HatId, type SkinId, type TrailId } from "../game-data";
+import { getHatMeta, getSkinMeta, getTrailMeta, SKINS, type ArtSource, type CharacterId, type HatId, type SkinId, type TrailId } from "../game-data";
 
 type RacePlayer = {
   renderKey: string;
@@ -37,11 +37,7 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
 
         preload() {
           const imageEntries = new Map<string, string>();
-          Object.values(CHARACTERS).forEach((meta) => {
-            imageEntries.set(meta.sceneKey, meta.imagePath);
-          });
-
-          (["surangi-classic", "surangi-detective", "surangi-rainbow", "surangi-mechanic", "surangi-sun", "surangi-skater", "surangi-snack", "surangi-soccer", "turtle-classic", "turtle-coder", "turtle-sprint"] as SkinId[]).forEach((skinId) => {
+          SKINS.forEach(({ id: skinId }) => {
             const art = getSkinMeta(skinId).art;
             imageEntries.set(art.imagePath, art.imagePath);
           });
@@ -80,69 +76,91 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
           const { width, height } = this.scale;
           this.children.removeAll();
 
-          this.add.rectangle(width / 2, height / 2, width, height, 0xeef8f2);
-          this.add.rectangle(width / 2, 38, width - 36, 52, 0x18392f, 0.08);
-          this.add.text(26, 26, "실시간 트랙", {
+          const startX = 74;
+          const finishX = width - 72;
+          const trackTop = 132;
+          const trackBottom = height - 74;
+          const trackHeight = trackBottom - trackTop;
+          const laneOffsets = [-72, -32, 8, 48, 88, -104, 118, -2];
+
+          this.add.rectangle(width / 2, height / 2, width, height, 0xe8f4ec);
+          this.add.rectangle(width / 2, 88, width, 176, 0xdaf0e3, 1);
+          this.add.ellipse(width * 0.2, 96, 190, 76, 0xffffff, 0.34);
+          this.add.ellipse(width * 0.78, 126, 240, 84, 0xffffff, 0.28);
+          this.add.rectangle(width / 2, trackBottom + 34, width, 120, 0xc4ddcc, 1);
+          this.add.rectangle(width / 2, (trackTop + trackBottom) / 2, width - 34, trackHeight, 0xf7eee1, 1)
+            .setStrokeStyle(2, 0xe0d0bc, 0.9);
+          this.add.rectangle(startX, (trackTop + trackBottom) / 2, 8, trackHeight + 12, 0x2d5f4b, 0.8);
+          this.add.rectangle(finishX, (trackTop + trackBottom) / 2, 10, trackHeight + 12, 0x17382e, 0.9);
+
+          for (let i = 0; i < 7; i += 1) {
+            const y = trackTop + ((trackHeight / 6) * i);
+            this.add.line(width / 2, y, startX + 12, y, finishX - 12, y, 0xffffff, 0.18).setLineWidth(2, 2);
+          }
+
+          this.add.text(26, 26, "Arena Race", {
             color: "#17382e",
             fontFamily: "Pretendard Variable, sans-serif",
-            fontSize: "18px",
+            fontSize: "16px",
             fontStyle: "700",
           });
+          this.add.text(26, 52, "같은 트랙 위에서 서로 부딪치듯 추월합니다.", {
+            color: "#527269",
+            fontFamily: "Pretendard Variable, sans-serif",
+            fontSize: "14px",
+          });
+          this.add.text(startX - 8, trackTop - 36, "START", {
+            color: "#2d5f4b",
+            fontFamily: "Pretendard Variable, sans-serif",
+            fontSize: "14px",
+            fontStyle: "700",
+          }).setOrigin(0.5, 0.5);
+          this.add.text(finishX, trackTop - 36, "FINISH", {
+            color: "#17382e",
+            fontFamily: "Pretendard Variable, sans-serif",
+            fontSize: "14px",
+            fontStyle: "700",
+          }).setOrigin(0.5, 0.5);
 
-          this.current.players.forEach((player, index) => {
-            const laneTop = 88 + index * 86;
+          [...this.current.players]
+            .sort((left, right) => {
+              if (left.progress === right.progress) {
+                return left.renderKey.localeCompare(right.renderKey);
+              }
+
+              return left.progress - right.progress;
+            })
+            .forEach((player, index) => {
             const trailMeta = getTrailMeta(player.trailId);
             const hatMeta = getHatMeta(player.hatId);
             const skinMeta = getSkinMeta(player.skinId);
-            const runnerX = 42 + ((width - 96) * player.progress) / 100;
+            const y = trackTop + trackHeight / 2 + laneOffsets[index % laneOffsets.length];
+            const x = startX + ((finishX - startX - 18) * player.progress) / 100;
 
-            this.add.rectangle(width / 2, laneTop + 30, width - 32, 64, 0xffffff, 0.96).setStrokeStyle(
-              player.isLocal ? 2 : 1,
-              player.isLocal ? 0x4fad83 : 0xd6e5da,
-            );
-
-            this.add.text(24, laneTop, `${player.name}`, {
-              color: "#18392f",
-              fontFamily: "Pretendard Variable, sans-serif",
-              fontSize: "16px",
-              fontStyle: "700",
-            });
-
-            this.add.text(width - 196, laneTop, `${skinMeta.badge} · ${hatMeta.emoji} ${trailMeta.emoji}`, {
-              color: "#527269",
-              fontFamily: "Pretendard Variable, sans-serif",
-              fontSize: "14px",
-            });
-
-            this.add.rectangle(width / 2, laneTop + 38, width - 120, 14, 0xddebe2, 1);
-            this.add.rectangle(42 + (width - 120) / 2, laneTop + 38, width - 120, 14, 0xddebe2, 1)
-              .setOrigin(0.5, 0.5);
-
-            this.add.rectangle(42 + ((width - 120) * player.progress) / 2, laneTop + 38, ((width - 120) * player.progress) / 100, 14, trailMeta.color, 0.35)
-              .setOrigin(0, 0.5);
-
-            this.add.circle(runnerX, laneTop + 38, 28, skinMeta.tint, 0.22);
-            this.add.circle(runnerX, laneTop + 38, 20, trailMeta.color, 0.18);
-            this.drawArt(skinMeta.art, runnerX, laneTop + 34, 42, skinMeta.tint);
+            this.add.ellipse(x + 6, y + 50, 76, 20, 0x80674e, 0.18);
+            this.add.circle(x - 34, y + 38, 7, trailMeta.color, 0.4);
+            this.add.circle(x - 50, y + 40, 5, trailMeta.color, 0.24);
+            this.add.circle(x - 64, y + 42, 3, trailMeta.color, 0.14);
+            this.add.circle(x, y + 18, player.isLocal ? 42 : 34, trailMeta.color, player.isLocal ? 0.18 : 0.12);
+            this.drawArt(skinMeta.art, x, y + 8, player.isLocal ? 92 : 84, skinMeta.tint);
             if (player.hatId !== "none") {
-              this.add.text(runnerX, laneTop + 6, hatMeta.emoji, {
+              this.add.text(x, y - 30, hatMeta.emoji, {
                 color: "#18392f",
                 fontFamily: "Apple Color Emoji, Segoe UI Emoji, sans-serif",
-                fontSize: "18px",
+                fontSize: player.isLocal ? "26px" : "22px",
               }).setOrigin(0.5, 0.5);
             }
-            this.add.circle(runnerX - 24, laneTop + 38, 4, trailMeta.color, 0.9);
-            this.add.circle(runnerX - 34, laneTop + 38, 3, trailMeta.color, 0.65);
-            this.add.circle(runnerX - 42, laneTop + 38, 2, trailMeta.color, 0.45);
-
-            if (player.place > 0) {
-              this.add.text(width - 52, laneTop + 22, `${player.place}위`, {
-                color: "#18392f",
-                fontFamily: "Pretendard Variable, sans-serif",
-                fontSize: "14px",
-                fontStyle: "700",
-              });
-            }
+            const tag = this.add.container(x, y - 70);
+            const badgeWidth = Math.max(92, player.name.length * 12 + 52);
+            const tagBg = this.add.rectangle(0, 0, badgeWidth, 30, player.isLocal ? 0x224c3d : 0xffffff, player.isLocal ? 0.94 : 0.9)
+              .setStrokeStyle(1, player.isLocal ? 0x4fad83 : 0xd7e5dc, 1);
+            const tagText = this.add.text(0, 0, `${player.place || index + 1}위 ${player.name}`, {
+              color: player.isLocal ? "#ffffff" : "#17382e",
+              fontFamily: "Pretendard Variable, sans-serif",
+              fontSize: "13px",
+              fontStyle: "700",
+            }).setOrigin(0.5, 0.5);
+            tag.add([tagBg, tagText]);
           });
         }
       }
@@ -154,8 +172,8 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
 
       game = new Phaser.Game({
         type: Phaser.AUTO,
-        width: 468,
-        height: Math.max(300, 120 + players.length * 86),
+        width: 760,
+        height: 560,
         parent: hostRef.current,
         transparent: true,
         scene,

@@ -839,6 +839,87 @@ export function App() {
   const selectedCharacterId = localPlayer?.characterId ?? characterId;
   const selectedCharacterSkins = getCharacterSkins(selectedCharacterId);
   const equippedSkinMeta = getSkinMeta(profile.equippedSkin);
+  const raceRanking = [...racingPlayers].sort((left, right) => {
+    if (left.place && right.place) {
+      return left.place - right.place;
+    }
+
+    return right.progress - left.progress;
+  });
+  const localRaceRank = localPlayer?.place
+    || Math.max(1, raceRanking.findIndex((player) => player.sessionId === localPlayer?.sessionId) + 1);
+
+  if (roomSnapshot?.phase === "racing") {
+    return (
+      <main className="race-page-shell">
+        <section className="race-page">
+          <header className="race-page-header">
+            <div className="race-page-copy">
+              <p className="eyebrow">Live Arena</p>
+              <h1>{roomSnapshot.roomId}</h1>
+              <p>좁은 레인 대신 하나의 넓은 트랙에서 실시간으로 추월과 겹침이 일어나는 레이스 화면입니다.</p>
+            </div>
+            <div className="race-page-hud">
+              <article className="race-hud-card race-hud-card-accent">
+                <span>남은 시간</span>
+                <strong>{raceLabel}</strong>
+              </article>
+              <article className="race-hud-card">
+                <span>현재 순위</span>
+                <strong>{localRaceRank}위</strong>
+              </article>
+              <article className="race-hud-card">
+                <span>출전 세팅</span>
+                <strong>{getHatMeta(profile.equippedHat).emoji} {getTrailMeta(profile.equippedTrail).emoji}</strong>
+              </article>
+            </div>
+          </header>
+
+          <section className="race-stage-full">
+            <div className="race-arena-panel">
+              <RaceTrackPhaser players={racingPlayers} />
+            </div>
+
+            <aside className="race-sidebar">
+              <div className="race-standings">
+                <div className="section-copy">
+                  <p className="panel-title">실시간 순위</p>
+                  <p>진행도 기준으로 계속 재정렬됩니다.</p>
+                </div>
+                <div className="race-standings-list">
+                  {raceRanking.map((player, index) => (
+                    <article key={player.renderKey} className={player.isLocal ? "race-standing-card active" : "race-standing-card"}>
+                      <span className="race-standing-rank">{player.place || index + 1}</span>
+                      <CharacterArt className="mini-avatar" skinId={player.skinId} size={32} alt={getSkinMeta(player.skinId).label} />
+                      <div className="race-standing-copy">
+                        <strong>{player.name}</strong>
+                        <span>{player.progress.toFixed(0)}m · {getSkinMeta(player.skinId).badge}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="race-input-panel">
+                <div className="section-copy">
+                  <p className="panel-title">탭 입력</p>
+                  <p>LEFT와 RIGHT를 번갈아 누를수록 속도가 붙습니다.</p>
+                </div>
+                <div className="input-deck input-deck-large">
+                  <button type="button" className="tap-button tap-button-left" onPointerDown={() => sendInput("left")}>
+                    LEFT
+                  </button>
+                  <button type="button" className="tap-button tap-button-right" onPointerDown={() => sendInput("right")}>
+                    RIGHT
+                  </button>
+                </div>
+              </div>
+            </aside>
+          </section>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="app-shell">
@@ -1026,12 +1107,6 @@ export function App() {
                   <article className="summary-card summary-card-accent">
                     <span className="summary-label">시작까지</span>
                     <strong>{countdownLabel}</strong>
-                  </article>
-                ) : null}
-                {roomSnapshot.phase === "racing" ? (
-                  <article className="summary-card summary-card-accent">
-                    <span className="summary-label">남은 시간</span>
-                    <strong>{raceLabel}</strong>
                   </article>
                 ) : null}
               </div>
@@ -1311,29 +1386,6 @@ export function App() {
                 </section>
               ) : null}
             </section>
-
-            {roomSnapshot.phase === "racing" ? (
-              <section className="panel race-stage">
-                <div className="track-header">
-                  <div>
-                    <p className="panel-title">실시간 레이스</p>
-                    <p className="stage-copy">Phaser 씬 위에서 실시간 진행도를 보며 좌우 버튼을 번갈아 탭하세요.</p>
-                  </div>
-                  <span className="result-badge">{raceLabel}</span>
-                </div>
-
-                <RaceTrackPhaser players={racingPlayers} />
-
-                <div className="input-deck">
-                  <button type="button" className="tap-button" onPointerDown={() => sendInput("left")}>
-                    LEFT
-                  </button>
-                  <button type="button" className="tap-button" onPointerDown={() => sendInput("right")}>
-                    RIGHT
-                  </button>
-                </div>
-              </section>
-            ) : null}
 
             {isCustomizerOpen ? (
               <section className="modal-shell" aria-label="커스터마이즈">
