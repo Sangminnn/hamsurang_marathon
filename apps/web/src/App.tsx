@@ -647,6 +647,10 @@ export function App() {
     roomRef.current?.send("kickPlayer", { sessionId });
   }
 
+  function startSoloPreview() {
+    roomRef.current?.send("startSoloPreview");
+  }
+
   async function closeRoomByAdmin(roomId: string) {
     const response = await fetch(`${getHttpApiBase(serverUrl)}/api/rooms/${roomId}`, {
       method: "DELETE",
@@ -1182,15 +1186,26 @@ export function App() {
                         <p className="panel-title">참가자 현황</p>
                         <p>준비가 완료된 참가자가 모이면 자동으로 다음 레이스가 시작됩니다.</p>
                       </div>
-                      {localPlayer ? (
-                        <button
-                          type="button"
-                          className={localPlayer.isReady ? "secondary-button compact-button ready-toggle" : "primary-button compact-button ready-toggle"}
-                          onClick={() => sendReady(!localPlayer.isReady)}
-                        >
-                          {localPlayer.isReady ? "준비 해제" : "준비 완료"}
-                        </button>
-                      ) : null}
+                      <div className="lobby-cta-group">
+                        {localPlayer?.isHost && roomSnapshot.players.length === 1 ? (
+                          <button
+                            type="button"
+                            className="secondary-button compact-button ready-toggle"
+                            onClick={startSoloPreview}
+                          >
+                            혼자 테스트 시작
+                          </button>
+                        ) : null}
+                        {localPlayer ? (
+                          <button
+                            type="button"
+                            className={localPlayer.isReady ? "secondary-button compact-button ready-toggle" : "primary-button compact-button ready-toggle"}
+                            onClick={() => sendReady(!localPlayer.isReady)}
+                          >
+                            {localPlayer.isReady ? "준비 해제" : "준비 완료"}
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                     <div className="player-list">
                       {roomSnapshot.players.map((player) => (
@@ -1227,6 +1242,38 @@ export function App() {
                       ))}
                     </div>
                   </div>
+
+                  {localPlayer ? (
+                    <div className="panel inset">
+                      <div className="section-copy">
+                        <p className="panel-title">출전 미리보기</p>
+                        <p>지금 장착한 스킨, 모자, 트레일이 레이스 씬에 이렇게 반영됩니다.</p>
+                      </div>
+                      <article className="loadout-preview-card">
+                        <div className="loadout-preview-art">
+                          <span className="loadout-preview-hat">
+                            {profile.equippedHat === "none" ? "" : getHatMeta(profile.equippedHat).emoji}
+                          </span>
+                          <img
+                            className="loadout-preview-avatar"
+                            src={CHARACTERS[selectedCharacterId].imagePath}
+                            alt={CHARACTERS[selectedCharacterId].label}
+                          />
+                          <div className="loadout-preview-trail">
+                            <span style={{ backgroundColor: `#${getTrailMeta(profile.equippedTrail).color.toString(16).padStart(6, "0")}` }} />
+                            <span style={{ backgroundColor: `#${getTrailMeta(profile.equippedTrail).color.toString(16).padStart(6, "0")}` }} />
+                            <span style={{ backgroundColor: `#${getTrailMeta(profile.equippedTrail).color.toString(16).padStart(6, "0")}` }} />
+                          </div>
+                        </div>
+                        <div className="player-meta">
+                          <span className="player-role">{getSkinMeta(profile.equippedSkin).label}</span>
+                          <span className="player-loadout">
+                            {getHatMeta(profile.equippedHat).emoji} {getTrailMeta(profile.equippedTrail).emoji}
+                          </span>
+                        </div>
+                      </article>
+                    </div>
+                  ) : null}
                 </>
               ) : null}
 

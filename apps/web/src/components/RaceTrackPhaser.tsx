@@ -102,6 +102,16 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
             this.add.circle(runnerX, laneTop + 38, 28, skinMeta.tint, 0.22);
             this.add.circle(runnerX, laneTop + 38, 20, trailMeta.color, 0.18);
             this.add.image(runnerX, laneTop + 34, charMeta.sceneKey).setDisplaySize(42, 42).setTint(skinMeta.tint);
+            if (player.hatId !== "none") {
+              this.add.text(runnerX, laneTop + 6, hatMeta.emoji, {
+                color: "#18392f",
+                fontFamily: "Apple Color Emoji, Segoe UI Emoji, sans-serif",
+                fontSize: "18px",
+              }).setOrigin(0.5, 0.5);
+            }
+            this.add.circle(runnerX - 24, laneTop + 38, 4, trailMeta.color, 0.9);
+            this.add.circle(runnerX - 34, laneTop + 38, 3, trailMeta.color, 0.65);
+            this.add.circle(runnerX - 42, laneTop + 38, 2, trailMeta.color, 0.45);
 
             if (player.place > 0) {
               this.add.text(width - 52, laneTop + 22, `${player.place}위`, {

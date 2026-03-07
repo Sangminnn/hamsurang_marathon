@@ -459,6 +459,11 @@ button {
   margin-bottom: 14px;
 }
 
+.lobby-cta-group {
+  display: grid;
+  gap: 10px;
+}
+
 .ready-toggle {
   min-width: 0;
   width: 100%;
@@ -775,6 +780,73 @@ button {
 
 .reward-banner strong {
   font-size: 1.35rem;
+}
+
+.loadout-preview-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ffffff, #f4faf7);
+  border: 1px solid rgba(113, 154, 129, 0.12);
+}
+
+.loadout-preview-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+  border-radius: 20px;
+  background: radial-gradient(circle at top, rgba(111, 162, 117, 0.18), rgba(111, 162, 117, 0.04));
+  overflow: hidden;
+}
+
+.loadout-preview-avatar {
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 24px rgba(34, 74, 59, 0.14));
+}
+
+.loadout-preview-hat {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.loadout-preview-trail {
+  position: absolute;
+  left: calc(50% - 72px);
+  top: 50%;
+  display: inline-flex;
+  gap: 8px;
+  transform: translateY(-10%);
+}
+
+.loadout-preview-trail span {
+  display: inline-block;
+  border-radius: 999px;
+  opacity: 0.85;
+}
+
+.loadout-preview-trail span:nth-child(1) {
+  width: 28px;
+  height: 12px;
+}
+
+.loadout-preview-trail span:nth-child(2) {
+  width: 16px;
+  height: 10px;
+  opacity: 0.6;
+}
+
+.loadout-preview-trail span:nth-child(3) {
+  width: 10px;
+  height: 8px;
+  opacity: 0.4;
 }
 
 .result-copy {

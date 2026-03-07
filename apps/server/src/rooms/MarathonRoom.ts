@@ -32,6 +32,7 @@ const MAX_NICKNAME_LENGTH = 12;
 export class MarathonRoom extends Room<MarathonRoomState> {
   maxClients = MAX_PLAYERS;
   private createdAt = new Date().toISOString();
+  private countdownMinPlayers = MIN_PLAYERS;
 
   private countdownTimer?: ReturnType<typeof setTimeout>;
   private raceTimer?: ReturnType<typeof setTimeout>;
@@ -129,6 +130,19 @@ export class MarathonRoom extends Room<MarathonRoomState> {
       if (this.state.phase === "lobby") {
         this.startCountdown();
       }
+    });
+
+    this.onMessage("startSoloPreview", (client) => {
+      const player = this.state.players.get(client.sessionId);
+      if (!player?.isHost || this.state.phase !== "lobby" || this.state.players.size !== 1) {
+        return;
+      }
+
+      player.isReady = true;
+      this.startCountdown(1);
+      this.broadcast("toast", {
+        message: "혼자 테스트 레이스를 시작합니다.",
+      });
     });
 
     this.onMessage(
@@ -255,8 +269,8 @@ export class MarathonRoom extends Room<MarathonRoomState> {
     nextPlayer.isHost = true;
   }
 
-  private canStartCountdown() {
-    if (this.state.players.size < MIN_PLAYERS) {
+  private canStartCountdown(requiredPlayers = this.countdownMinPlayers) {
+    if (this.state.players.size < requiredPlayers) {
       return false;
     }
 
@@ -269,8 +283,9 @@ export class MarathonRoom extends Room<MarathonRoomState> {
     return true;
   }
 
-  private startCountdown() {
+  private startCountdown(requiredPlayers = MIN_PLAYERS) {
     this.cancelCountdown();
+    this.countdownMinPlayers = requiredPlayers;
     this.state.phase = "countdown";
     this.state.countdownStartedAt = Date.now();
     this.state.countdownEndsAt = this.state.countdownStartedAt + COUNTDOWN_MS;
@@ -278,7 +293,7 @@ export class MarathonRoom extends Room<MarathonRoomState> {
     this.broadcast("countdown", { endsAt: this.state.countdownEndsAt });
 
     this.countdownTimer = setTimeout(() => {
-      if (!this.canStartCountdown()) {
+      if (!this.canStartCountdown(requiredPlayers)) {
         this.state.phase = "lobby";
         this.syncRegistry();
         return;
@@ -295,6 +310,7 @@ export class MarathonRoom extends Room<MarathonRoomState> {
 
     clearTimeout(this.countdownTimer);
     this.countdownTimer = undefined;
+    this.countdownMinPlayers = MIN_PLAYERS;
     this.broadcast("countdownCanceled", {});
   }
 
@@ -382,6 +398,7 @@ export class MarathonRoom extends Room<MarathonRoomState> {
     this.state.raceStartedAt = 0;
     this.state.raceEndsAt = 0;
     this.state.winnerSessionId = "";
+    this.countdownMinPlayers = MIN_PLAYERS;
     this.syncRegistry();
 
     for (const player of this.state.players.values()) {
