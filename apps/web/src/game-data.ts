@@ -6,8 +6,19 @@ export type SkinId =
   | "surangi-mechanic"
   | "surangi-sun"
   | "surangi-skater"
-  | "surangi-snack"
-  | "surangi-soccer"
+  | "surangi-explorer"
+  | "surangi-farmer"
+  | "surangi-diver"
+  | "surangi-blossom"
+  | "surangi-headset"
+  | "surangi-dj"
+  | "surangi-chef"
+  | "surangi-astronaut"
+  | "surangi-runner"
+  | "surangi-winter"
+  | "surangi-pilot"
+  | "surangi-banker"
+  | "surangi-cadet"
   | "turtle-classic"
   | "turtle-coder"
   | "turtle-sprint";
@@ -80,7 +91,7 @@ export const SKINS: Array<{
     badge: "기본",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/surang_variants/surangi-classic.png",
+      imagePath: "/assets/characters/surang_roster/surangi-classic.png",
     },
   },
   {
@@ -94,7 +105,7 @@ export const SKINS: Array<{
     badge: "인기",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/surang_variants/surangi-detective.png",
+      imagePath: "/assets/characters/surang_roster/surangi-detective.png",
     },
   },
   {
@@ -108,7 +119,7 @@ export const SKINS: Array<{
     badge: "인기",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/surang_variants/surangi-rainbow.png",
+      imagePath: "/assets/characters/surang_roster/surangi-rainbow.png",
     },
   },
   {
@@ -122,7 +133,7 @@ export const SKINS: Array<{
     badge: "희귀",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/surang_variants/surangi-mechanic.png",
+      imagePath: "/assets/characters/surang_roster/surangi-mechanic.png",
     },
   },
   {
@@ -136,7 +147,7 @@ export const SKINS: Array<{
     badge: "신규",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/surang_variants/surangi-sun.png",
+      imagePath: "/assets/characters/surang_roster/surangi-sun.png",
     },
   },
   {
@@ -150,35 +161,189 @@ export const SKINS: Array<{
     badge: "시그니처",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/surang_variants/surangi-skater.png",
+      imagePath: "/assets/characters/surang_roster/surangi-skater.png",
     },
   },
   {
-    id: "surangi-snack",
+    id: "surangi-explorer",
     characterId: "surangi",
-    label: "낙서 수랑이",
-    subtitle: "간식과 함께하는 캐주얼 캐릭터",
-    price: 140,
+    label: "익스플로러 수랑이",
+    subtitle: "장비를 챙긴 탐험형 캐릭터",
+    price: 180,
     tint: 0xffffff,
-    accentColor: "#8f8f8f",
-    badge: "한정",
+    accentColor: "#5f9a86",
+    badge: "신규",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/surang_variants/surangi-snack.png",
+      imagePath: "/assets/characters/surang_roster/surangi-explorer.png",
     },
   },
   {
-    id: "surangi-soccer",
+    id: "surangi-farmer",
     characterId: "surangi",
-    label: "사커 수랑이",
-    subtitle: "경기장 감성의 스포츠 캐릭터",
+    label: "파머 수랑이",
+    subtitle: "정원과 모자를 갖춘 힐링형 캐릭터",
     price: 160,
     tint: 0xffffff,
-    accentColor: "#d69d34",
+    accentColor: "#7ea45a",
     badge: "희귀",
     art: {
       kind: "image",
-      imagePath: "/assets/characters/surang_variants/surangi-soccer.png",
+      imagePath: "/assets/characters/surang_roster/surangi-farmer.png",
+    },
+  },
+  {
+    id: "surangi-diver",
+    characterId: "surangi",
+    label: "다이버 수랑이",
+    subtitle: "깊은 바다 콘셉트의 잠수복 캐릭터",
+    price: 220,
+    tint: 0xffffff,
+    accentColor: "#e28a2a",
+    badge: "희귀",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-diver.png",
+    },
+  },
+  {
+    id: "surangi-blossom",
+    characterId: "surangi",
+    label: "블라썸 수랑이",
+    subtitle: "꽃 장식이 포인트인 감성 캐릭터",
+    price: 170,
+    tint: 0xffffff,
+    accentColor: "#d5798c",
+    badge: "인기",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-blossom.png",
+    },
+  },
+  {
+    id: "surangi-headset",
+    characterId: "surangi",
+    label: "헤드셋 수랑이",
+    subtitle: "라이브 방송 감성의 퍼포머 캐릭터",
+    price: 180,
+    tint: 0xffffff,
+    accentColor: "#9a82d8",
+    badge: "인기",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-headset.png",
+    },
+  },
+  {
+    id: "surangi-dj",
+    characterId: "surangi",
+    label: "DJ 수랑이",
+    subtitle: "콘솔과 함께 등장하는 스테이지 캐릭터",
+    price: 230,
+    tint: 0xffffff,
+    accentColor: "#a06cd5",
+    badge: "시그니처",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-dj.png",
+    },
+  },
+  {
+    id: "surangi-chef",
+    characterId: "surangi",
+    label: "셰프 수랑이",
+    subtitle: "앞치마와 모자가 귀여운 키친 캐릭터",
+    price: 185,
+    tint: 0xffffff,
+    accentColor: "#d96c63",
+    badge: "인기",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-chef.png",
+    },
+  },
+  {
+    id: "surangi-astronaut",
+    characterId: "surangi",
+    label: "우주비행사 수랑이",
+    subtitle: "우주복과 헬멧이 강조된 탐험 캐릭터",
+    price: 240,
+    tint: 0xffffff,
+    accentColor: "#7f90d4",
+    badge: "전설",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-astronaut.png",
+    },
+  },
+  {
+    id: "surangi-runner",
+    characterId: "surangi",
+    label: "러너 수랑이",
+    subtitle: "이어폰과 조끼를 갖춘 마라톤 캐릭터",
+    price: 195,
+    tint: 0xffffff,
+    accentColor: "#f08f4e",
+    badge: "신규",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-runner.png",
+    },
+  },
+  {
+    id: "surangi-winter",
+    characterId: "surangi",
+    label: "윈터 수랑이",
+    subtitle: "패딩과 비니가 포근한 겨울 캐릭터",
+    price: 205,
+    tint: 0xffffff,
+    accentColor: "#85c7d4",
+    badge: "희귀",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-winter.png",
+    },
+  },
+  {
+    id: "surangi-pilot",
+    characterId: "surangi",
+    label: "파일럿 수랑이",
+    subtitle: "유니폼이 돋보이는 항공 캐릭터",
+    price: 210,
+    tint: 0xffffff,
+    accentColor: "#4b6cb7",
+    badge: "희귀",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-pilot.png",
+    },
+  },
+  {
+    id: "surangi-banker",
+    characterId: "surangi",
+    label: "뱅커 수랑이",
+    subtitle: "브리프케이스를 든 비즈니스 캐릭터",
+    price: 210,
+    tint: 0xffffff,
+    accentColor: "#816b4a",
+    badge: "희귀",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-banker.png",
+    },
+  },
+  {
+    id: "surangi-cadet",
+    characterId: "surangi",
+    label: "캐딧 수랑이",
+    subtitle: "교복 느낌의 단정한 캐릭터",
+    price: 200,
+    tint: 0xffffff,
+    accentColor: "#d6a13d",
+    badge: "신규",
+    art: {
+      kind: "image",
+      imagePath: "/assets/characters/surang_roster/surangi-cadet.png",
     },
   },
   {

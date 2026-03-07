@@ -73,18 +73,7 @@ export class MarathonRoom extends Room<MarathonRoomState> {
       (
         client,
         payload: {
-          skinId:
-            | "surangi-classic"
-            | "surangi-detective"
-            | "surangi-rainbow"
-            | "surangi-mechanic"
-            | "surangi-sun"
-            | "surangi-skater"
-            | "surangi-snack"
-            | "surangi-soccer"
-            | "turtle-classic"
-            | "turtle-coder"
-            | "turtle-sprint";
+          skinId: string;
           hatId: "none" | "cap" | "crown" | "leaf" | "visor";
           trailId: "mint" | "spark" | "flame" | "petal";
         },

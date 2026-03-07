@@ -5,33 +5,10 @@ import path from "node:path";
 export type StoredProfile = {
   preferredName: string;
   coins: number;
-  equippedSkin:
-    | "surangi-classic"
-    | "surangi-detective"
-    | "surangi-rainbow"
-    | "surangi-mechanic"
-    | "surangi-sun"
-    | "surangi-skater"
-    | "surangi-snack"
-    | "surangi-soccer"
-    | "turtle-classic"
-    | "turtle-coder"
-    | "turtle-sprint";
+  equippedSkin: string;
   equippedHat: "none" | "cap" | "crown" | "leaf" | "visor";
   equippedTrail: "mint" | "spark" | "flame" | "petal";
-  unlockedSkins: Array<
-    | "surangi-classic"
-    | "surangi-detective"
-    | "surangi-rainbow"
-    | "surangi-mechanic"
-    | "surangi-sun"
-    | "surangi-skater"
-    | "surangi-snack"
-    | "surangi-soccer"
-    | "turtle-classic"
-    | "turtle-coder"
-    | "turtle-sprint"
-  >;
+  unlockedSkins: string[];
   unlockedHats: Array<"none" | "cap" | "crown" | "leaf" | "visor">;
   unlockedTrails: Array<"mint" | "spark" | "flame" | "petal">;
   updatedAt: string;
