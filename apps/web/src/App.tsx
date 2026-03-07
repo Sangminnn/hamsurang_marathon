@@ -825,7 +825,7 @@ export function App() {
             <div className="race-page-copy">
               <p className="eyebrow">Live Arena</p>
               <h1>{roomSnapshot.roomId}</h1>
-              <p>좁은 레인 대신 하나의 넓은 트랙에서 실시간으로 추월과 겹침이 일어나는 레이스 화면입니다.</p>
+              <p>참가자들이 같은 직선 트랙에서 결승선을 향해 달리는 실시간 레이스 화면입니다.</p>
             </div>
             <div className="race-page-hud">
               <article className="race-hud-card race-hud-card-accent">

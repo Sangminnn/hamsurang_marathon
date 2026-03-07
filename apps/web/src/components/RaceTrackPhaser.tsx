@@ -93,81 +93,87 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
         private renderSnapshot() {
           const { width, height } = this.scale;
           this.children.removeAll();
-
-          const startX = 74;
-          const finishX = width - 72;
-          const trackTop = 132;
-          const trackBottom = height - 74;
+          const isMobile = width < 560;
+          const orderedPlayers = [...this.current.players].sort((left, right) =>
+            left.renderKey.localeCompare(right.renderKey),
+          );
+          const laneCount = Math.max(orderedPlayers.length, 1);
+          const outerPadding = isMobile ? 14 : 22;
+          const headerHeight = isMobile ? 40 : 52;
+          const trackLeft = outerPadding + 22;
+          const trackRight = width - outerPadding - 22;
+          const trackTop = outerPadding + headerHeight + 12;
+          const trackBottom = height - outerPadding - 16;
+          const trackWidth = trackRight - trackLeft;
           const trackHeight = trackBottom - trackTop;
-          const laneOffsets = [-72, -32, 8, 48, 88, -104, 118, -2];
+          const laneHeight = trackHeight / laneCount;
+          const startX = trackLeft + Math.max(24, trackWidth * 0.08);
+          const finishX = trackRight - Math.max(24, trackWidth * 0.1);
+          const runnerSize = Math.max(
+            isMobile ? 26 : 32,
+            Math.min(isMobile ? 54 : 68, laneHeight * (isMobile ? 0.44 : 0.52)),
+          );
+          const labelFontSize = isMobile ? "11px" : "13px";
 
           this.add.rectangle(width / 2, height / 2, width, height, 0xe8f4ec);
-          this.add.rectangle(width / 2, 88, width, 176, 0xdaf0e3, 1);
-          this.add.ellipse(width * 0.2, 96, 190, 76, 0xffffff, 0.34);
-          this.add.ellipse(width * 0.78, 126, 240, 84, 0xffffff, 0.28);
-          this.add.rectangle(width / 2, trackBottom + 34, width, 120, 0xc4ddcc, 1);
-          this.add.rectangle(width / 2, (trackTop + trackBottom) / 2, width - 34, trackHeight, 0xf7eee1, 1)
-            .setStrokeStyle(2, 0xe0d0bc, 0.9);
-          this.add.rectangle(startX, (trackTop + trackBottom) / 2, 8, trackHeight + 12, 0x2d5f4b, 0.8);
-          this.add.rectangle(finishX, (trackTop + trackBottom) / 2, 10, trackHeight + 12, 0x17382e, 0.9);
+          this.add.ellipse(width * 0.22, 76, isMobile ? 150 : 220, isMobile ? 58 : 84, 0xffffff, 0.34);
+          this.add.ellipse(width * 0.78, 92, isMobile ? 170 : 250, isMobile ? 56 : 84, 0xffffff, 0.22);
+          this.add.rectangle(width / 2, trackBottom + 30, width, isMobile ? 88 : 110, 0xc7dfcf, 1);
+          this.add.rectangle(width / 2, (trackTop + trackBottom) / 2, width - outerPadding * 2, trackHeight + 26, 0xd7ebdd, 0.92)
+            .setStrokeStyle(1, 0xc6ddce, 0.9);
+          this.add.rectangle(width / 2, (trackTop + trackBottom) / 2, trackWidth, trackHeight, 0xf6ecdf, 1)
+            .setStrokeStyle(2, 0xe2d2c0, 0.92);
 
-          for (let i = 0; i < 7; i += 1) {
-            const y = trackTop + ((trackHeight / 6) * i);
-            this.add.line(width / 2, y, startX + 12, y, finishX - 12, y, 0xffffff, 0.18).setLineWidth(2, 2);
+          for (let index = 0; index <= laneCount; index += 1) {
+            const y = trackTop + laneHeight * index;
+            this.add.line(width / 2, y, trackLeft, y, trackRight, y, 0xffffff, index === 0 || index === laneCount ? 0.22 : 0.34)
+              .setLineWidth(2, 2);
           }
 
-          this.add.text(26, 26, "Arena Race", {
-            color: "#17382e",
-            fontFamily: "Pretendard Variable, sans-serif",
-            fontSize: "16px",
-            fontStyle: "700",
-          });
-          this.add.text(26, 52, "같은 트랙 위에서 서로 부딪치듯 추월합니다.", {
-            color: "#527269",
-            fontFamily: "Pretendard Variable, sans-serif",
-            fontSize: "14px",
-          });
-          this.add.text(startX - 8, trackTop - 36, "START", {
+          for (let marker = 1; marker < 5; marker += 1) {
+            const markerX = startX + ((finishX - startX) * marker) / 5;
+            this.add.line(markerX, (trackTop + trackBottom) / 2, markerX, trackTop + 10, markerX, trackBottom - 10, 0xffffff, 0.18)
+              .setLineWidth(2, 2);
+          }
+
+          this.add.rectangle(startX, (trackTop + trackBottom) / 2, isMobile ? 5 : 7, trackHeight + 8, 0x2d5f4b, 0.82);
+          this.add.rectangle(finishX, (trackTop + trackBottom) / 2, isMobile ? 8 : 10, trackHeight + 8, 0x17382e, 0.92);
+          this.add.text(startX, trackTop - 18, "START", {
             color: "#2d5f4b",
             fontFamily: "Pretendard Variable, sans-serif",
-            fontSize: "14px",
+            fontSize: labelFontSize,
             fontStyle: "700",
           }).setOrigin(0.5, 0.5);
-          this.add.text(finishX, trackTop - 36, "FINISH", {
+          this.add.text(finishX, trackTop - 18, "FINISH", {
             color: "#17382e",
             fontFamily: "Pretendard Variable, sans-serif",
-            fontSize: "14px",
+            fontSize: labelFontSize,
             fontStyle: "700",
           }).setOrigin(0.5, 0.5);
 
-          [...this.current.players]
-            .sort((left, right) => {
-              if (left.progress === right.progress) {
-                return left.renderKey.localeCompare(right.renderKey);
-              }
-
-              return left.progress - right.progress;
-            })
-            .forEach((player, index) => {
+          orderedPlayers.forEach((player, index) => {
             const trailMeta = getTrailMeta(player.trailId);
             const skinMeta = getSkinMeta(player.skinId);
-            const y = trackTop + trackHeight / 2 + laneOffsets[index % laneOffsets.length];
-            const x = startX + ((finishX - startX - 18) * player.progress) / 100;
+            const centerY = trackTop + laneHeight * index + laneHeight / 2;
+            const x = startX + ((finishX - startX - runnerSize * 0.16) * player.progress) / 100;
+            const shadowWidth = runnerSize * 0.92;
+            const shadowHeight = Math.max(8, runnerSize * 0.22);
+            const tagTextValue = `${player.place || index + 1}위 ${player.name}`;
+            const tagWidth = Math.max(isMobile ? 74 : 90, tagTextValue.length * (isMobile ? 7.2 : 8.4) + 22);
 
-            this.add.ellipse(x + 6, y + 50, 76, 20, 0x80674e, 0.18);
-            this.add.circle(x - 34, y + 38, 7, trailMeta.color, 0.4);
-            this.add.circle(x - 50, y + 40, 5, trailMeta.color, 0.24);
-            this.add.circle(x - 64, y + 42, 3, trailMeta.color, 0.14);
-            this.add.circle(x, y + 18, player.isLocal ? 42 : 34, trailMeta.color, player.isLocal ? 0.18 : 0.12);
-            this.drawArt(skinMeta.art, x, y + 8, player.isLocal ? 92 : 84, skinMeta.tint);
-            const tag = this.add.container(x, y - 70);
-            const badgeWidth = Math.max(92, player.name.length * 12 + 52);
-            const tagBg = this.add.rectangle(0, 0, badgeWidth, 30, player.isLocal ? 0x224c3d : 0xffffff, player.isLocal ? 0.94 : 0.9)
-              .setStrokeStyle(1, player.isLocal ? 0x4fad83 : 0xd7e5dc, 1);
-            const tagText = this.add.text(0, 0, `${player.place || index + 1}위 ${player.name}`, {
+            this.add.ellipse(x, centerY + runnerSize * 0.42, shadowWidth, shadowHeight, 0x7f654a, 0.14);
+            this.add.circle(x - runnerSize * 0.82, centerY + runnerSize * 0.14, Math.max(2, runnerSize * 0.12), trailMeta.color, 0.34);
+            this.add.circle(x - runnerSize * 1.08, centerY + runnerSize * 0.16, Math.max(2, runnerSize * 0.08), trailMeta.color, 0.22);
+            this.add.circle(x - runnerSize * 1.32, centerY + runnerSize * 0.18, Math.max(1, runnerSize * 0.05), trailMeta.color, 0.14);
+            this.drawArt(skinMeta.art, x, centerY, runnerSize, skinMeta.tint);
+
+            const tag = this.add.container(x, centerY - runnerSize * 0.72);
+            const tagBg = this.add.rectangle(0, 0, tagWidth, isMobile ? 22 : 26, player.isLocal ? 0x224c3d : 0xffffff, player.isLocal ? 0.96 : 0.92)
+              .setStrokeStyle(1, player.isLocal ? 0x4fad83 : 0xd6e5db, 1);
+            const tagText = this.add.text(0, 0, tagTextValue, {
               color: player.isLocal ? "#ffffff" : "#17382e",
               fontFamily: "Pretendard Variable, sans-serif",
-              fontSize: "13px",
+              fontSize: isMobile ? "10px" : "12px",
               fontStyle: "700",
             }).setOrigin(0.5, 0.5);
             tag.add([tagBg, tagText]);

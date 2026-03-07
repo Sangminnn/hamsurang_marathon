@@ -1484,6 +1484,10 @@ button {
 }
 
 @media (max-width: 520px) {
+  .race-page-copy p:last-child {
+    display: none;
+  }
+
   .wallet-strip > .wallet-card:last-child:nth-child(odd) {
     grid-column: 1 / -1;
   }
