@@ -8,12 +8,16 @@
 
 [게임 진입 전]
 
-https://github.com/user-attachments/assets/133c15a8-fbdf-4dad-9422-3fba85984350
+
+https://github.com/user-attachments/assets/801640e4-18d1-4af7-a634-73035c04afb0
+
 
 
 [게임 화면]
 
-https://github.com/user-attachments/assets/62290881-47ae-405e-9307-b27673bacfa6
+
+https://github.com/user-attachments/assets/d8f62089-227a-4972-b924-9fea670be94f
+
 
 
 [결과 화면]
