@@ -184,40 +184,43 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
           const laneCount = Math.max(orderedPlayers.length, 1);
           const outerPadding = isMobile ? 14 : 22;
           const headerHeight = isMobile ? 40 : 52;
+
+          // World is 2.5x viewport width; vertical stays the same
+          const worldWidth = Math.round(width * 3);
           const trackLeft = outerPadding + 22;
-          const trackRight = width - outerPadding - 22;
+          const trackRight = worldWidth - outerPadding - 22;
           const trackTop = outerPadding + headerHeight + 12;
           const trackBottom = height - outerPadding - 16;
           const trackWidth = trackRight - trackLeft;
           const trackHeight = trackBottom - trackTop;
           const laneHeight = trackHeight / laneCount;
-          const startX = trackLeft + Math.max(24, trackWidth * 0.08);
-          const finishX = trackRight - Math.max(24, trackWidth * 0.1);
+          const startX = trackLeft + Math.max(24, trackWidth * 0.04);
+          const finishX = trackRight - Math.max(24, trackWidth * 0.04);
           const runnerSize = Math.max(
             isMobile ? 20 : 26,
             Math.min(isMobile ? 36 : 46, laneHeight * (isMobile ? 0.32 : 0.36)),
           );
           const labelFontSize = isMobile ? "11px" : "13px";
 
-          this.add.rectangle(width / 2, height / 2, width, height, 0xe8f4ec);
-          this.add.ellipse(width * 0.22, 76, isMobile ? 150 : 220, isMobile ? 58 : 84, 0xffffff, 0.34);
-          this.add.ellipse(width * 0.78, 92, isMobile ? 170 : 250, isMobile ? 56 : 84, 0xffffff, 0.22);
-          this.add.rectangle(width / 2, trackBottom + 30, width, isMobile ? 88 : 110, 0xc7dfcf, 1);
-          this.add.rectangle(width / 2, (trackTop + trackBottom) / 2, width - outerPadding * 2, trackHeight + 26, 0xd7ebdd, 0.92)
+          // Background fills the entire world
+          this.add.rectangle(worldWidth / 2, height / 2, worldWidth, height, 0xe8f4ec);
+          this.add.rectangle(worldWidth / 2, trackBottom + 30, worldWidth, isMobile ? 88 : 110, 0xc7dfcf, 1);
+          this.add.rectangle(worldWidth / 2, (trackTop + trackBottom) / 2, worldWidth - outerPadding * 2, trackHeight + 26, 0xd7ebdd, 0.92)
             .setStrokeStyle(1, 0xc6ddce, 0.9);
-          this.add.rectangle(width / 2, (trackTop + trackBottom) / 2, trackWidth, trackHeight, 0xf6ecdf, 1)
+          this.add.rectangle(worldWidth / 2, (trackTop + trackBottom) / 2, trackWidth, trackHeight, 0xf6ecdf, 1)
             .setStrokeStyle(2, 0xe2d2c0, 0.92);
 
           for (let index = 0; index <= laneCount; index += 1) {
             const y = trackTop + laneHeight * index;
-            this.add.line(width / 2, y, trackLeft, y, trackRight, y, 0xffffff, index === 0 || index === laneCount ? 0.22 : 0.34)
-              .setLineWidth(2, 2);
+            this.add.line(0, 0, trackLeft, y, trackRight, y, 0xffffff, index === 0 || index === laneCount ? 0.22 : 0.34)
+              .setLineWidth(2, 2).setOrigin(0, 0);
           }
 
-          for (let marker = 1; marker < 5; marker += 1) {
-            const markerX = startX + ((finishX - startX) * marker) / 5;
-            this.add.line(markerX, (trackTop + trackBottom) / 2, markerX, trackTop + 10, markerX, trackBottom - 10, 0xffffff, 0.18)
-              .setLineWidth(2, 2);
+          // Distance markers every 10%
+          for (let marker = 1; marker < 10; marker += 1) {
+            const markerX = startX + ((finishX - startX) * marker) / 10;
+            this.add.line(0, 0, markerX, trackTop + 10, markerX, trackBottom - 10, 0xffffff, 0.18)
+              .setLineWidth(2, 2).setOrigin(0, 0);
           }
 
           this.add.rectangle(startX, (trackTop + trackBottom) / 2, isMobile ? 5 : 7, trackHeight + 8, 0x2d5f4b, 0.82);
@@ -235,12 +238,14 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
             fontStyle: "700",
           }).setOrigin(0.5, 0.5);
 
+          let localPlayerX = startX;
+
           orderedPlayers.forEach((player, index) => {
             const trailMeta = getTrailMeta(player.trailId);
             const skinMeta = getSkinMeta(player.skinId);
             const laneCenterY = trackTop + laneHeight * index + laneHeight / 2;
             const pixelsPerProgress = (finishX - startX) / 100;
-            const laneDriftLimit = pixelsPerProgress * (22 / 4.8);
+            const laneDriftLimit = pixelsPerProgress * (7.3 / 1.6);
             const centerY = laneCenterY + player.lateralOffset * laneDriftLimit;
             const x = startX + ((finishX - startX - runnerSize * 0.16) * player.progress) / 100;
             const shadowWidth = runnerSize * 0.92;
@@ -252,6 +257,7 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
 
             if (player.isLocal) {
               this.add.ellipse(x, centerY + runnerSize * 0.44, runnerSize * 1.2, runnerSize * 0.32, 0x4fad83, 0.28);
+              localPlayerX = x;
             }
 
             this.drawArt(skinMeta.art, x, centerY, runnerSize, player.skinId, skinMeta.tint);
@@ -276,6 +282,12 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
               player.turnDirection,
             );
           });
+
+          // Camera follows local player horizontally, clamped to world bounds
+          const cam = this.cameras.main;
+          cam.setBounds(0, 0, worldWidth, height);
+          const targetScrollX = Math.max(0, Math.min(worldWidth - width, localPlayerX - width * 0.35));
+          cam.scrollX = targetScrollX;
         }
       }
 
