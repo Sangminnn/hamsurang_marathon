@@ -5,7 +5,22 @@
 
 ## 시연 영상
 
-<video src="apps/web/public/assets/함수랑_마라톤.mov" controls width="360"></video>
+
+[게임 진입 전]
+
+https://github.com/user-attachments/assets/133c15a8-fbdf-4dad-9422-3fba85984350
+
+
+[게임 화면]
+
+https://github.com/user-attachments/assets/62290881-47ae-405e-9307-b27673bacfa6
+
+
+[결과 화면]
+
+<img width="587" height="1038" alt="image" src="https://github.com/user-attachments/assets/f0af24d4-49d2-4ca6-b22d-98165be94ce1" />
+
+
 
 ## 이런 게임이에요
 
