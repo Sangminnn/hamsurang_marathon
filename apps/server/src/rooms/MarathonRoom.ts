@@ -17,7 +17,7 @@ type JoinOptions = {
 
 type RuntimeInputState = {
   lastInputAt: number;
-  targetHeadingDeg: number;
+  turnDirection: -1 | 1;
 };
 
 const MIN_PLAYERS = 2;
@@ -27,13 +27,11 @@ const RACE_DURATION_MS = 30000;
 const MAX_PROGRESS = 100;
 const MIN_INPUT_INTERVAL_MS = 80;
 const MAX_NICKNAME_LENGTH = 12;
-const RACE_TICK_MS = 50;
-const MAX_HEADING_DEG = 34;
-const LATERAL_LIMIT = 1;
-const BASE_FORWARD_SPEED = 18;
-const STRAIGHT_RECENTER_MS = 650;
-const HEADING_RESPONSE = 7.5;
-const LATERAL_SPEED = 1.8;
+const RACE_TICK_MS = 16;
+const LATERAL_LIMIT = 50;
+const BASE_FORWARD_SPEED = 22;
+const TURN_SPEED_DEG_PER_SECOND = 220;
+const LATERAL_SPEED = 4.8;
 
 export class MarathonRoom extends Room<MarathonRoomState> {
   maxClients = MAX_PLAYERS;
@@ -165,7 +163,7 @@ export class MarathonRoom extends Room<MarathonRoomState> {
         const now = Date.now();
         const runtimeState = this.runtimeInputs.get(client.sessionId) ?? {
           lastInputAt: 0,
-          targetHeadingDeg: 0,
+          turnDirection: -1,
         };
 
         const interval = now - runtimeState.lastInputAt;
@@ -174,9 +172,9 @@ export class MarathonRoom extends Room<MarathonRoomState> {
         }
 
         runtimeState.lastInputAt = now;
-        runtimeState.targetHeadingDeg =
-          payload.direction === "left" ? -MAX_HEADING_DEG : MAX_HEADING_DEG;
+        runtimeState.turnDirection = (runtimeState.turnDirection === 1 ? -1 : 1) as -1 | 1;
         this.runtimeInputs.set(client.sessionId, runtimeState);
+        player.turnDirection = runtimeState.turnDirection;
       },
     );
 
@@ -197,7 +195,7 @@ export class MarathonRoom extends Room<MarathonRoomState> {
     this.state.players.set(client.sessionId, player);
     this.runtimeInputs.set(client.sessionId, {
       lastInputAt: 0,
-      targetHeadingDeg: 0,
+      turnDirection: -1,
     });
 
     this.broadcast("toast", {
@@ -329,7 +327,7 @@ export class MarathonRoom extends Room<MarathonRoomState> {
     for (const sessionId of this.state.players.keys()) {
       this.runtimeInputs.set(sessionId, {
         lastInputAt: 0,
-        targetHeadingDeg: 0,
+        turnDirection: -1,
       });
     }
 
@@ -433,29 +431,25 @@ export class MarathonRoom extends Room<MarathonRoomState> {
 
       const runtimeState = this.runtimeInputs.get(player.sessionId) ?? {
         lastInputAt: 0,
-        targetHeadingDeg: 0,
+        turnDirection: -1,
       };
-      const idleMs = now - runtimeState.lastInputAt;
-      const targetHeadingDeg = idleMs > STRAIGHT_RECENTER_MS ? 0 : runtimeState.targetHeadingDeg;
-      const lerpFactor = Math.min(1, deltaSeconds * HEADING_RESPONSE);
+
+      // Compute velocity from CURRENT heading first, then update heading (symplectic Euler)
+      const headingRadians = (player.headingDeg * Math.PI) / 180;
+      const forwardVelocity = Math.cos(headingRadians) * BASE_FORWARD_SPEED;
+      const lateralVelocity = Math.sin(headingRadians) * LATERAL_SPEED;
 
       player.headingDeg = Number(
-        (player.headingDeg + (targetHeadingDeg - player.headingDeg) * lerpFactor).toFixed(2),
+        (((player.headingDeg + runtimeState.turnDirection * TURN_SPEED_DEG_PER_SECOND * deltaSeconds) % 360) + 360) % 360,
       );
 
-      const lateralVelocity = (player.headingDeg / MAX_HEADING_DEG) * LATERAL_SPEED;
+      player.progress = Number(
+        Math.max(0, Math.min(MAX_PROGRESS, player.progress + forwardVelocity * deltaSeconds)).toFixed(2),
+      );
       player.lateralOffset = Number(
         Math.max(-LATERAL_LIMIT, Math.min(LATERAL_LIMIT, player.lateralOffset + lateralVelocity * deltaSeconds))
           .toFixed(3),
       );
-
-      const steeringPenalty = Math.abs(player.headingDeg) / MAX_HEADING_DEG;
-      const edgePenalty = Math.abs(player.lateralOffset) > 0.82 ? 0.62 : 1;
-      const forwardDelta =
-        BASE_FORWARD_SPEED * (1 - steeringPenalty * 0.28) * edgePenalty * deltaSeconds;
-
-      player.progress = Math.min(MAX_PROGRESS, Number((player.progress + forwardDelta).toFixed(2)));
-
       if (player.progress >= MAX_PROGRESS) {
         player.progress = MAX_PROGRESS;
         player.finishMs = now - this.state.raceStartedAt;

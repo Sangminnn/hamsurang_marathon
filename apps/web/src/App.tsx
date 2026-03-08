@@ -25,6 +25,9 @@ type RoomPhase = "lobby" | "countdown" | "racing" | "results";
 type GameMode = "sprint";
 type InputDirection = "left" | "right";
 type CustomizingTab = "skins" | "trails";
+type AppRoute =
+  | { kind: "home" }
+  | { kind: "room"; roomId: string; phase: RoomPhase | "room" };
 
 type PlayerSnapshot = {
   renderKey: string;
@@ -41,6 +44,7 @@ type PlayerSnapshot = {
   lateralOffset: number;
   finishMs: number;
   place: number;
+  turnDirection: number;
 };
 
 type RoomSnapshot = {
@@ -104,6 +108,53 @@ function getDefaultServerUrl() {
   return `ws://${window.location.hostname}:2567`;
 }
 
+function parseRoute(pathname: string): AppRoute {
+  const normalizedPath = pathname.replace(/\/+$/, "") || "/";
+  const segments = normalizedPath.split("/").filter(Boolean);
+
+  if (segments[0] !== "room" || !segments[1]) {
+    return { kind: "home" };
+  }
+
+  const phaseSegment = segments[2];
+  if (phaseSegment === "countdown") {
+    return { kind: "room", roomId: segments[1], phase: "countdown" };
+  }
+  if (phaseSegment === "race") {
+    return { kind: "room", roomId: segments[1], phase: "racing" };
+  }
+  if (phaseSegment === "results") {
+    return { kind: "room", roomId: segments[1], phase: "results" };
+  }
+
+  return { kind: "room", roomId: segments[1], phase: "room" };
+}
+
+function getRoutePath(route: AppRoute) {
+  if (route.kind === "home") {
+    return "/";
+  }
+
+  switch (route.phase) {
+    case "countdown":
+      return `/room/${route.roomId}/countdown`;
+    case "racing":
+      return `/room/${route.roomId}/race`;
+    case "results":
+      return `/room/${route.roomId}/results`;
+    default:
+      return `/room/${route.roomId}`;
+  }
+}
+
+function getRouteForRoom(roomId: string, phase: RoomPhase): AppRoute {
+  return {
+    kind: "room",
+    roomId,
+    phase: phase === "lobby" ? "room" : phase,
+  };
+}
+
 function normalizeCharacterId(value: string | undefined): CharacterId {
   return "surangi";
 }
@@ -143,6 +194,7 @@ function normalizePlayer(rawPlayer: RawPlayerLike, fallbackKey: string): PlayerS
     lateralOffset: rawPlayer.lateralOffset ?? 0,
     finishMs: rawPlayer.finishMs ?? 0,
     place: rawPlayer.place ?? 0,
+    turnDirection: rawPlayer.turnDirection ?? 1,
   };
 }
 
@@ -176,8 +228,8 @@ function snapshotRoom(room: Room): RoomSnapshot {
   };
 }
 
-function formatMs(ms: number) {
-  return `${Math.max(0, Math.ceil(ms / 1000))}s`;
+function formatMs(ms: number, unit = "s") {
+  return `${Math.max(0, Math.ceil(ms / 1000))}${unit}`;
 }
 
 function getStatusLabel(phase: RoomPhase) {
@@ -274,12 +326,15 @@ function getHttpApiBase(serverUrl: string) {
 
 export function App() {
   const [serverUrl] = useState(getDefaultServerUrl);
+  const [route, setRoute] = useState<AppRoute>(() =>
+    typeof window === "undefined" ? { kind: "home" } : parseRoute(window.location.pathname),
+  );
   const [auth, setAuth] = useState(getSavedAuth);
   const [playerName, setPlayerName] = useState(() => getSavedAuth().nickname || loadProfile().preferredName);
   const [joinRoomId, setJoinRoomId] = useState("");
   const [characterId, setCharacterId] = useState<CharacterId>(() => getSkinMeta(loadProfile().equippedSkin).characterId);
   const [profile, setProfile] = useState<CosmeticProfile>(loadProfile);
-  const [countdownLabel, setCountdownLabel] = useState("3s");
+  const [countdownLabel, setCountdownLabel] = useState("3");
   const [raceLabel, setRaceLabel] = useState("30s");
   const [toast, setToast] = useState("");
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
@@ -290,16 +345,112 @@ export function App() {
 
   const roomRef = useRef<Room | null>(null);
   const rewardedRaceRef = useRef<number>(0);
+  const attemptedRouteRoomIdRef = useRef<string>("");
+  const roomSnapshotRef = useRef(roomSnapshot);
+
+  function navigateTo(nextRoute: AppRoute, options?: { replace?: boolean }) {
+    setRoute((current) => {
+      const nextPath = getRoutePath(nextRoute);
+      const currentPath = getRoutePath(current);
+
+      if (typeof window !== "undefined" && nextPath !== window.location.pathname) {
+        window.history[options?.replace ? "replaceState" : "pushState"](null, "", nextPath);
+      }
+
+      return currentPath === nextPath ? current : nextRoute;
+    });
+  }
+
+  function bindRoom(nextRoom: Room) {
+    roomRef.current = nextRoom;
+    attemptedRouteRoomIdRef.current = nextRoom.roomId;
+    setConnectionState("connected");
+    setRoomSnapshot(snapshotRoom(nextRoom));
+    navigateTo(getRouteForRoom(nextRoom.roomId, snapshotRoom(nextRoom).phase));
+
+    nextRoom.onStateChange((state) => {
+      startTransition(() => {
+        const fakeRoom = { ...nextRoom, state } as Room;
+        setRoomSnapshot(snapshotRoom(fakeRoom));
+      });
+    });
+
+    nextRoom.onMessage("toast", (message: { message: string }) => {
+      setToast(message.message);
+    });
+
+    nextRoom.onLeave(() => {
+      roomRef.current = null;
+      setRoomSnapshot(null);
+      setConnectionState("idle");
+      attemptedRouteRoomIdRef.current = "";
+      navigateTo({ kind: "home" }, { replace: true });
+    });
+
+    nextRoom.send("selectCharacter", { characterId });
+    nextRoom.send("selectLoadout", {
+      skinId: profile.equippedSkin,
+      trailId: profile.equippedTrail,
+    });
+  }
 
   useEffect(() => {
     persistAuth(auth);
   }, [auth]);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handlePopState = () => {
+      setRoute(parseRoute(window.location.pathname));
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
     if (auth.nickname) {
       setPlayerName(auth.nickname);
     }
   }, [auth.nickname]);
+
+  useEffect(() => {
+    if (!roomSnapshot) {
+      return;
+    }
+
+    navigateTo(getRouteForRoom(roomSnapshot.roomId, roomSnapshot.phase));
+  }, [roomSnapshot]);
+
+  useEffect(() => {
+    if (route.kind !== "room" || roomSnapshot || connectionState === "connecting") {
+      return;
+    }
+
+    if (attemptedRouteRoomIdRef.current === route.roomId) {
+      return;
+    }
+
+    if (!playerName.trim() && !auth.playerId) {
+      setToast("룸에 입장하려면 닉네임이 필요합니다.");
+      navigateTo({ kind: "home" }, { replace: true });
+      return;
+    }
+
+    attemptedRouteRoomIdRef.current = route.roomId;
+    void joinRoomById(route.roomId, { fallbackToHomeOnError: true, replaceUrl: true });
+  }, [route, roomSnapshot, connectionState, playerName, auth.playerId]);
+
+  useEffect(() => {
+    if (route.kind === "home" && roomRef.current) {
+      leaveRoom();
+    }
+  }, [route.kind]);
 
   useEffect(() => {
     let cancelled = false;
@@ -413,24 +564,29 @@ export function App() {
   }, [auth.playerId, playerName, profile, serverUrl]);
 
   useEffect(() => {
+    roomSnapshotRef.current = roomSnapshot;
+  }, [roomSnapshot]);
+
+  useEffect(() => {
     const timer = window.setInterval(() => {
-      if (!roomSnapshot) {
+      const snap = roomSnapshotRef.current;
+      if (!snap) {
         return;
       }
 
-      if (roomSnapshot.phase === "countdown") {
-        setCountdownLabel(formatMs(roomSnapshot.countdownEndsAt - Date.now()));
+      if (snap.phase === "countdown") {
+        setCountdownLabel(formatMs(snap.countdownEndsAt - Date.now(), ""));
       }
 
-      if (roomSnapshot.phase === "racing") {
-        setRaceLabel(formatMs(roomSnapshot.raceEndsAt - Date.now()));
+      if (snap.phase === "racing") {
+        setRaceLabel(formatMs(snap.raceEndsAt - Date.now()));
       }
     }, 200);
 
     return () => {
       window.clearInterval(timer);
     };
-  }, [roomSnapshot]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -532,6 +688,47 @@ export function App() {
     return loginWithNickname();
   }
 
+  async function joinRoomById(
+    roomId: string,
+    options?: {
+      fallbackToHomeOnError?: boolean;
+      replaceUrl?: boolean;
+    },
+  ) {
+    const currentAuth = await ensureAuth();
+    if (!currentAuth?.playerId) {
+      setConnectionState("idle");
+      return;
+    }
+
+    if (!playerName.trim()) {
+      setToast("닉네임을 먼저 입력해 주세요.");
+      if (options?.fallbackToHomeOnError) {
+        navigateTo({ kind: "home" }, { replace: true });
+      }
+      return;
+    }
+
+    try {
+      const client = new Client(serverUrl);
+      const nextRoom = await client.joinById(roomId, {
+        name: playerName.trim(),
+      });
+
+      bindRoom(nextRoom);
+      if (options?.replaceUrl) {
+        navigateTo(getRouteForRoom(nextRoom.roomId, snapshotRoom(nextRoom).phase));
+      }
+    } catch (error) {
+      setConnectionState("idle");
+      attemptedRouteRoomIdRef.current = "";
+      setToast(error instanceof Error ? error.message : "연결에 실패했습니다.");
+      if (options?.fallbackToHomeOnError) {
+        navigateTo({ kind: "home" }, { replace: true });
+      }
+    }
+  }
+
   async function connect(kind: "create" | "join") {
     const currentAuth = await ensureAuth();
     if (!currentAuth?.playerId) {
@@ -558,38 +755,21 @@ export function App() {
       const nextRoom =
         kind === "create"
           ? await client.create("marathon", { name: playerName.trim() })
-          : await client.joinById(joinRoomId.trim(), {
-              name: playerName.trim(),
-            });
+          : null;
 
-      roomRef.current = nextRoom;
-      setConnectionState("connected");
-      setRoomSnapshot(snapshotRoom(nextRoom));
+      if (kind === "join") {
+        await joinRoomById(joinRoomId.trim(), { fallbackToHomeOnError: true, replaceUrl: true });
+        return;
+      }
 
-      nextRoom.onStateChange((state) => {
-        startTransition(() => {
-          const fakeRoom = { ...nextRoom, state } as Room;
-          setRoomSnapshot(snapshotRoom(fakeRoom));
-        });
-      });
+      if (!nextRoom) {
+        throw new Error("연결에 실패했습니다.");
+      }
 
-      nextRoom.onMessage("toast", (message: { message: string }) => {
-        setToast(message.message);
-      });
-
-      nextRoom.onLeave(() => {
-        roomRef.current = null;
-        setRoomSnapshot(null);
-        setConnectionState("idle");
-      });
-
-      nextRoom.send("selectCharacter", { characterId });
-      nextRoom.send("selectLoadout", {
-        skinId: profile.equippedSkin,
-        trailId: profile.equippedTrail,
-      });
+      bindRoom(nextRoom);
     } catch (error) {
       setConnectionState("idle");
+      attemptedRouteRoomIdRef.current = "";
       setToast(error instanceof Error ? error.message : "연결에 실패했습니다.");
     }
   }
@@ -599,6 +779,8 @@ export function App() {
     roomRef.current = null;
     setRoomSnapshot(null);
     setConnectionState("idle");
+    attemptedRouteRoomIdRef.current = "";
+    navigateTo({ kind: "home" });
   }
 
   function sendReady(nextReady: boolean) {
@@ -687,48 +869,7 @@ export function App() {
     });
 
     void (async () => {
-      try {
-        const currentAuth = await ensureAuth();
-        if (!currentAuth?.playerId) {
-          setConnectionState("idle");
-          return;
-        }
-
-        const client = new Client(serverUrl);
-        const nextRoom = await client.joinById(roomId, {
-          name: playerName.trim(),
-        });
-
-        roomRef.current = nextRoom;
-        setConnectionState("connected");
-        setRoomSnapshot(snapshotRoom(nextRoom));
-
-        nextRoom.onStateChange((state) => {
-          startTransition(() => {
-            const fakeRoom = { ...nextRoom, state } as Room;
-            setRoomSnapshot(snapshotRoom(fakeRoom));
-          });
-        });
-
-        nextRoom.onMessage("toast", (message: { message: string }) => {
-          setToast(message.message);
-        });
-
-        nextRoom.onLeave(() => {
-          roomRef.current = null;
-          setRoomSnapshot(null);
-          setConnectionState("idle");
-        });
-
-        nextRoom.send("selectCharacter", { characterId });
-        nextRoom.send("selectLoadout", {
-          skinId: profile.equippedSkin,
-          trailId: profile.equippedTrail,
-        });
-      } catch (error) {
-        setConnectionState("idle");
-        setToast(error instanceof Error ? error.message : "연결에 실패했습니다.");
-      }
+      await joinRoomById(roomId, { fallbackToHomeOnError: true, replaceUrl: true });
     })();
   }
 
@@ -821,17 +962,48 @@ export function App() {
   const localRaceRank = localPlayer?.place
     || Math.max(1, raceRanking.findIndex((player) => player.sessionId === localPlayer?.sessionId) + 1);
 
+  if (route.kind === "room" && !roomSnapshot) {
+    return (
+      <main className="stage-page-shell">
+        <section className="stage-page">
+          <header className="stage-page-header">
+            <div className="stage-page-copy">
+              <p className="eyebrow">Room Entry</p>
+              <h1>{route.roomId}</h1>
+              <p>레이스룸에 연결 중입니다. 잠시만 기다려 주세요.</p>
+            </div>
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={() => {
+                attemptedRouteRoomIdRef.current = "";
+                navigateTo({ kind: "home" }, { replace: true });
+              }}
+            >
+              홈으로
+            </button>
+          </header>
+
+          <section className="panel results-stage-panel">
+            <section className="countdown-stage">
+              <p className="countdown-label">
+                {connectionState === "connecting" ? "레이스룸 연결 중" : "레이스룸 준비 중"}
+              </p>
+              <strong className="countdown-number">...</strong>
+              <p className="countdown-copy">같은 URL로 다시 방문해도 이 방으로 바로 들어올 수 있게 연결을 맞추고 있습니다.</p>
+            </section>
+          </section>
+        </section>
+      </main>
+    );
+  }
+
   if (roomSnapshot?.phase === "racing") {
     return (
       <main className="race-page-shell">
         <section className="race-page">
           <header className="race-page-header">
-            <div className="race-page-copy">
-              <p className="eyebrow">Live Arena</p>
-              <h1>{roomSnapshot.roomId}</h1>
-              <p>참가자들이 같은 직선 트랙에서 결승선을 향해 달리는 실시간 레이스 화면입니다.</p>
-            </div>
-            <div className="race-page-hud">
+            <div className="race-page-hud race-page-hud-compact">
               <article className="race-hud-card race-hud-card-accent">
                 <span>남은 시간</span>
                 <strong>{raceLabel}</strong>
@@ -839,10 +1011,6 @@ export function App() {
               <article className="race-hud-card">
                 <span>현재 순위</span>
                 <strong>{localRaceRank}위</strong>
-              </article>
-              <article className="race-hud-card">
-                <span>출전 세팅</span>
-                <strong>{getTrailMeta(profile.equippedTrail).emoji} {getTrailMeta(profile.equippedTrail).label}</strong>
               </article>
             </div>
           </header>
@@ -865,7 +1033,7 @@ export function App() {
                       <CharacterArt className="mini-avatar" skinId={player.skinId} size={32} alt={getSkinMeta(player.skinId).label} />
                       <div className="race-standing-copy">
                         <strong>{player.name}</strong>
-                        <span>{player.progress.toFixed(0)}m · 조향 {player.headingDeg > 6 ? "우" : player.headingDeg < -6 ? "좌" : "정면"}</span>
+                        <span>{player.progress.toFixed(0)}m · 방향 {player.headingDeg > 4 ? "우회전" : player.headingDeg < -4 ? "좌회전" : "직진"}</span>
                       </div>
                     </article>
                   ))}
@@ -873,20 +1041,346 @@ export function App() {
               </div>
 
               <div className="race-input-panel">
-                <div className="section-copy">
-                  <p className="panel-title">조향 입력</p>
-                  <p>캐릭터는 자동으로 전진합니다. 좌우 버튼으로 화살표 방향을 꺾어 트랙 안에서 조향하세요.</p>
-                </div>
-                <div className="input-deck input-deck-large">
-                  <button type="button" className="tap-button tap-button-left" onPointerDown={() => sendInput("left")}>
-                    ↶ LEFT
-                  </button>
-                  <button type="button" className="tap-button tap-button-right" onPointerDown={() => sendInput("right")}>
-                    RIGHT ↷
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="turn-button"
+                  onPointerDown={() => sendInput("left")}
+                >
+                  <span className="turn-button-icon">↻</span>
+                  <span className="turn-button-label">방향 전환</span>
+                </button>
               </div>
             </aside>
+          </section>
+        </section>
+      </main>
+    );
+  }
+
+  if (roomSnapshot?.phase === "lobby") {
+    return (
+      <main className="room-page-shell">
+        <section className="room-page">
+          <header className="room-page-header">
+            <div className="room-page-copy">
+              <p className="eyebrow">Race Lobby</p>
+              <h1>{roomSnapshot.roomId}</h1>
+              <p>참가자를 모으고 세팅을 마치면 바로 다음 레이스를 시작할 수 있습니다.</p>
+            </div>
+            <button type="button" className="ghost-button" onClick={leaveRoom}>
+              나가기
+            </button>
+          </header>
+
+          <section className="room-page-stack">
+            <div className="panel inset">
+              <div className="section-copy">
+                <p className="panel-title">게임 모드</p>
+                <p>방장이 경기 방식을 정하면, 참가자 준비 완료와 함께 자동으로 카운트다운이 시작됩니다.</p>
+              </div>
+              <div className="mode-grid">
+                {GAME_MODE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={roomSnapshot.gameMode === option.value ? "choice mode-choice selected" : "choice mode-choice"}
+                    disabled={!localPlayer?.isHost}
+                    onClick={() => selectGame(option.value)}
+                  >
+                    <div className="choice-copy">
+                      <strong>{option.label}</strong>
+                      <span className="choice-subcopy">{option.description}</span>
+                    </div>
+                    <span className="choice-meta">
+                      {localPlayer?.isHost ? "선택 가능" : "방장 선택"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="panel inset">
+              <div className="section-copy">
+                <p className="panel-title">내 출전 세팅</p>
+                <p>지금 고른 스킨과 트레일이 레이스 시작과 동시에 그대로 반영됩니다.</p>
+              </div>
+              <div className="customizer-summary-grid">
+                <button type="button" className="customizer-entry" onClick={() => openCustomizer("skins")}>
+                  <div className="customizer-entry-copy">
+                    <span className="summary-label">캐릭터 스킨</span>
+                    <strong>{equippedSkinMeta.label}</strong>
+                    <p>{selectedCharacterSkins.length}개 스킨 중 선택 가능</p>
+                  </div>
+                  <CharacterArt className="customizer-entry-art" skinId={profile.equippedSkin} size={64} alt={equippedSkinMeta.label} />
+                </button>
+                <button type="button" className="customizer-entry" onClick={() => openCustomizer("trails")}>
+                  <div className="customizer-entry-copy">
+                    <span className="summary-label">트레일 이펙트</span>
+                    <strong>{getTrailMeta(profile.equippedTrail).label}</strong>
+                    <p>레이스 중 남는 효과를 바꿔보세요</p>
+                  </div>
+                  <span className="customizer-entry-icon">{getTrailMeta(profile.equippedTrail).emoji}</span>
+                </button>
+              </div>
+
+            </div>
+
+            <div className="panel inset">
+              <div className="section-head">
+                <div className="section-copy">
+                  <p className="panel-title">참가자 현황</p>
+                  <p>모든 참가자가 준비를 마치면 레이스가 바로 시작됩니다.</p>
+                </div>
+                <div className="lobby-cta-group">
+                  {localPlayer?.isHost && roomSnapshot.players.length === 1 ? (
+                    <button
+                      type="button"
+                      className="secondary-button compact-button ready-toggle"
+                      onClick={startSoloPreview}
+                    >
+                      혼자 테스트 시작
+                    </button>
+                  ) : null}
+                  {localPlayer ? (
+                    <button
+                      type="button"
+                      className={localPlayer.isReady ? "secondary-button compact-button ready-toggle" : "primary-button compact-button ready-toggle"}
+                      onClick={() => sendReady(!localPlayer.isReady)}
+                    >
+                      {localPlayer.isReady ? "준비 해제" : "준비 완료"}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              <div className="player-list">
+                {roomSnapshot.players.map((player) => (
+                  <article key={player.renderKey} className="player-card">
+                    <div className="player-copy">
+                      <strong className="player-name name-with-avatar">
+                        <CharacterArt className="player-avatar" skinId={player.skinId} size={42} alt={getSkinMeta(player.skinId).label} />
+                        <span>{player.name}</span>
+                      </strong>
+                      <div className="player-meta">
+                        <span className="player-role">
+                          {getSkinMeta(player.skinId).label} · {player.isHost ? "방장" : "참가자"}
+                        </span>
+                        <span className="player-loadout">
+                          {getTrailMeta(player.trailId).emoji} {getTrailMeta(player.trailId).label}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="player-actions">
+                      <span className={player.isReady ? "progress-pill progress-pill-ready" : "progress-pill"}>
+                        {player.isReady ? "준비됨" : "대기중"}
+                      </span>
+                      {localPlayer?.isHost && !player.isHost ? (
+                        <button
+                          type="button"
+                          className="icon-button"
+                          onClick={() => kickPlayer(player.sessionId)}
+                        >
+                          내보내기
+                        </button>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {isCustomizerOpen ? (
+            <section className="modal-shell" aria-label="커스터마이즈">
+              <button type="button" className="modal-backdrop" aria-label="닫기" onClick={closeCustomizer} />
+              <div className="modal-panel">
+                <div className="modal-head">
+                  <div className="section-copy">
+                    <p className="panel-title">커스터마이즈</p>
+                    <p>스킨과 트레일을 한 곳에서 구매하고 바로 출전 세팅에 반영하세요.</p>
+                  </div>
+                  <button type="button" className="ghost-button compact-button" onClick={closeCustomizer}>
+                    닫기
+                  </button>
+                </div>
+
+                <div className="modal-tab-row">
+                  <button
+                    type="button"
+                    className={customizingTab === "skins" ? "choice-meta modal-tab active" : "choice-meta modal-tab"}
+                    onClick={() => setCustomizingTab("skins")}
+                  >
+                    스킨
+                  </button>
+                  <button
+                    type="button"
+                    className={customizingTab === "trails" ? "choice-meta modal-tab active" : "choice-meta modal-tab"}
+                    onClick={() => setCustomizingTab("trails")}
+                  >
+                    트레일
+                  </button>
+                </div>
+
+                <div className="modal-body">
+                  {customizingTab === "skins" ? (
+                    <div className="cosmetic-list">
+                      {selectedCharacterSkins.map((skin) => {
+                        const unlocked = profile.unlockedSkins.includes(skin.id);
+                        const equipped = profile.equippedSkin === skin.id;
+
+                        return (
+                          <button
+                            key={skin.id}
+                            type="button"
+                            className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
+                            onClick={() => unlockOrEquipSkin(skin.id)}
+                          >
+                            <div className="cosmetic-copy cosmetic-copy-with-thumb">
+                              <CharacterArt className="cosmetic-thumb" skinId={skin.id} size={52} alt={skin.label} />
+                              <div>
+                                <strong>
+                                  {skin.label} <span className="cosmetic-inline-badge">{skin.badge}</span>
+                                </strong>
+                                <p>{unlocked ? skin.subtitle : `${skin.price} 코인으로 ${skin.subtitle} 해금`}</p>
+                              </div>
+                            </div>
+                            <span className="progress-pill">
+                              {equipped ? "출전 중" : unlocked ? "장착" : `${skin.price}C`}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  {customizingTab === "trails" ? (
+                    <div className="cosmetic-list">
+                      {TRAILS.map((trail) => {
+                        const unlocked = profile.unlockedTrails.includes(trail.id);
+                        const equipped = profile.equippedTrail === trail.id;
+
+                        return (
+                          <button
+                            key={trail.id}
+                            type="button"
+                            className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
+                            onClick={() => unlockOrEquipTrail(trail.id)}
+                          >
+                            <div className="cosmetic-copy">
+                              <strong>
+                                {trail.emoji} {trail.label}
+                              </strong>
+                              <p>{unlocked ? "즉시 장착 가능" : `${trail.price} 코인으로 해금`}</p>
+                            </div>
+                            <span className="progress-pill">
+                              {equipped ? "장착 중" : unlocked ? "장착" : `${trail.price}C`}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </section>
+          ) : null}
+        </section>
+      </main>
+    );
+  }
+
+  if (roomSnapshot?.phase === "countdown") {
+    return (
+      <main className="stage-page-shell">
+        <section className="stage-page">
+          <section className="panel countdown-stage-panel" style={{ marginTop: 24 }}>
+            <section className="countdown-stage">
+              <p className="countdown-label">출발 준비 완료</p>
+              <strong className="countdown-number">{countdownLabel}</strong>
+              <p className="countdown-copy">잠시 후 레이스가 시작됩니다. 양손 엄지를 버튼 위에 올려두세요.</p>
+            </section>
+
+            <div className="mini-lanes">
+              {roomSnapshot.players.map((player) => (
+                <article key={player.renderKey} className="mini-lane-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div className="mini-lane-copy" style={{ flex: 1, minWidth: 0 }}>
+                    <strong className="name-with-avatar">
+                      <CharacterArt className="mini-avatar" skinId={player.skinId} size={28} alt={getSkinMeta(player.skinId).label} />
+                      <span>{player.name}</span>
+                    </strong>
+                    <span>
+                      {getSkinMeta(player.skinId).label} · {getTrailMeta(player.trailId).emoji} {getTrailMeta(player.trailId).label}
+                    </span>
+                  </div>
+                  <span className="progress-pill progress-pill-ready">준비 완료</span>
+                </article>
+              ))}
+            </div>
+          </section>
+        </section>
+      </main>
+    );
+  }
+
+  if (roomSnapshot?.phase === "results") {
+    return (
+      <main className="stage-page-shell">
+        <section className="stage-page">
+          <header className="stage-page-header">
+            <div className="stage-page-copy">
+              <p className="eyebrow">Results</p>
+              <h1>{roomSnapshot.roomId}</h1>
+              <p>이번 경기 결과와 보상을 확인한 뒤 바로 다음 레이스를 준비할 수 있습니다.</p>
+            </div>
+          </header>
+
+          <section className="panel results-stage-panel">
+            <section className="results-stage">
+              <p className="panel-title">최종 순위</p>
+              <div className="winner-banner">
+                <span>Winner</span>
+                <strong className="name-with-avatar">
+                  {winner ? (
+                    <>
+                      <CharacterArt className="winner-avatar" skinId={winner.skinId} size={52} alt={getSkinMeta(winner.skinId).label} />
+                      <span>{winner.name}</span>
+                    </>
+                  ) : (
+                    <span>집계 중</span>
+                  )}
+                </strong>
+              </div>
+              {localPlayer ? (
+                <div className="reward-banner">
+                  <span>이번 경기 보상</span>
+                  <strong>+{getRaceReward(localPlayer.place)} 코인</strong>
+                </div>
+              ) : null}
+              <div className="results-list">
+                {roomSnapshot.players.map((player) => (
+                  <article key={player.renderKey} className="result-row">
+                    <div className="result-copy">
+                      <strong className="name-with-avatar">
+                        <CharacterArt className="mini-avatar" skinId={player.skinId} size={28} alt={getSkinMeta(player.skinId).label} />
+                        <span>{player.place}위 · {player.name}</span>
+                      </strong>
+                      <p>
+                        {getSkinMeta(player.skinId).label} · {getTrailMeta(player.trailId).emoji} {getTrailMeta(player.trailId).label}
+                      </p>
+                    </div>
+                    <span className="progress-pill">{player.progress.toFixed(0)}m</span>
+                  </article>
+                ))}
+              </div>
+              {localPlayer ? (
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => sendReady(true)}
+                >
+                  다음 경기 바로 준비
+                </button>
+              ) : null}
+            </section>
           </section>
         </section>
       </main>
@@ -929,19 +1423,6 @@ export function App() {
                   <p>순위 보상으로 캐릭터 스킨과 트레일을 열고 바로 다음 레이스에 반영할 수 있습니다.</p>
                 </article>
               </div>
-            </div>
-
-            <div className="wallet-strip wallet-strip-compact">
-              <article className="wallet-card">
-                <span>보유 코인</span>
-                <strong>{profile.coins}</strong>
-              </article>
-              <article className="wallet-card">
-                <span>현재 출전 세팅</span>
-                <strong>
-                  {equippedSkinMeta.label}
-                </strong>
-              </article>
             </div>
 
             <label className="field">
@@ -1052,397 +1533,7 @@ export function App() {
               </div>
             </div>
           </section>
-        ) : (
-          <>
-            <section className="panel room-summary">
-              <div className="room-summary-copy">
-                <p className="eyebrow">ROOM</p>
-                <strong>{roomSnapshot.roomId}</strong>
-                <p className="room-copy">룸 코드를 공유하면 다른 참가자가 같은 레이스룸으로 바로 입장합니다.</p>
-              </div>
-              <button type="button" className="ghost-button" onClick={leaveRoom}>
-                나가기
-              </button>
-            </section>
-
-            <section className="panel stack">
-              <div className="summary-grid">
-                <article className="summary-card">
-                  <span className="summary-label">현재 상태</span>
-                  <strong>{getStatusLabel(roomSnapshot.phase)}</strong>
-                </article>
-                <article className="summary-card">
-                  <span className="summary-label">참가 인원</span>
-                  <strong>{roomSnapshot.players.length}명</strong>
-                </article>
-                {roomSnapshot.phase === "countdown" ? (
-                  <article className="summary-card summary-card-accent">
-                    <span className="summary-label">시작까지</span>
-                    <strong>{countdownLabel}</strong>
-                  </article>
-                ) : null}
-              </div>
-
-              <div className="wallet-strip lobby-stats">
-                <article className="wallet-card wallet-card-stat">
-                  <span>보유 코인</span>
-                  <strong>{profile.coins}</strong>
-                </article>
-                <article className="wallet-card wallet-card-stat">
-                  <span>장착 스킨</span>
-                  <strong>{equippedSkinMeta.badge}</strong>
-                </article>
-                <article className="wallet-card wallet-card-stat">
-                  <span>이펙트</span>
-                  <strong className="wallet-icon">
-                    {getTrailMeta(profile.equippedTrail).emoji}
-                  </strong>
-                </article>
-              </div>
-
-              {roomSnapshot.phase === "lobby" ? (
-                <>
-                  <div className="panel inset">
-                    <div className="section-copy">
-                      <p className="panel-title">게임 모드</p>
-                      <p>방장이 경기 방식을 고르면, 참가자 준비가 끝나는 즉시 카운트다운이 시작됩니다.</p>
-                    </div>
-                    <div className="mode-grid">
-                      {GAME_MODE_OPTIONS.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          className={roomSnapshot.gameMode === option.value ? "choice mode-choice selected" : "choice mode-choice"}
-                          disabled={!localPlayer?.isHost}
-                          onClick={() => selectGame(option.value)}
-                        >
-                          <div className="choice-copy">
-                            <strong>{option.label}</strong>
-                            <span className="choice-subcopy">{option.description}</span>
-                          </div>
-                          <span className="choice-meta">
-                            {localPlayer?.isHost ? "선택 가능" : "방장 선택"}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="panel inset">
-                    <div className="section-copy">
-                      <p className="panel-title">내 캐릭터 세팅</p>
-                      <p>선택 캐릭터에 맞는 스킨과 트레일을 준비하면 레이스 시작과 함께 다른 참가자에게 그대로 보입니다.</p>
-                    </div>
-                    <div className="character-grid">
-                      {PLAYABLE_CHARACTERS.map(({ id, label }) => (
-                        <button
-                          key={id}
-                          type="button"
-                          className={localPlayer?.characterId === id ? "choice character-choice selected" : "choice character-choice"}
-                          onClick={() => selectCharacter(id)}
-                        >
-                          <CharacterArt
-                            className="choice-art"
-                            skinId={getDefaultSkinForCharacter(id)}
-                            size={88}
-                            alt={label}
-                          />
-                          <span className="choice-copy">
-                            <strong>{label}</strong>
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="customizer-summary-grid">
-                      <button type="button" className="customizer-entry" onClick={() => openCustomizer("skins")}>
-                        <div className="customizer-entry-copy">
-                          <span className="summary-label">캐릭터 스킨</span>
-                          <strong>{equippedSkinMeta.label}</strong>
-                          <p>{selectedCharacterSkins.length}개 스킨 중 선택 가능</p>
-                        </div>
-                        <CharacterArt className="customizer-entry-art" skinId={profile.equippedSkin} size={64} alt={equippedSkinMeta.label} />
-                      </button>
-                      <button type="button" className="customizer-entry" onClick={() => openCustomizer("trails")}>
-                        <div className="customizer-entry-copy">
-                          <span className="summary-label">트레일 이펙트</span>
-                          <strong>{getTrailMeta(profile.equippedTrail).label}</strong>
-                          <p>레이스 중 남는 효과를 바꿔보세요</p>
-                        </div>
-                        <span className="customizer-entry-icon">{getTrailMeta(profile.equippedTrail).emoji}</span>
-                      </button>
-                    </div>
-
-                    <button type="button" className="secondary-button" onClick={() => openCustomizer("skins")}>
-                      커스터마이즈 열기
-                    </button>
-                  </div>
-
-                  <div className="panel inset">
-                    <div className="section-head">
-                      <div className="section-copy">
-                        <p className="panel-title">참가자 현황</p>
-                        <p>준비가 완료된 참가자가 모이면 자동으로 다음 레이스가 시작됩니다.</p>
-                      </div>
-                      <div className="lobby-cta-group">
-                        {localPlayer?.isHost && roomSnapshot.players.length === 1 ? (
-                          <button
-                            type="button"
-                            className="secondary-button compact-button ready-toggle"
-                            onClick={startSoloPreview}
-                          >
-                            혼자 테스트 시작
-                          </button>
-                        ) : null}
-                        {localPlayer ? (
-                          <button
-                            type="button"
-                            className={localPlayer.isReady ? "secondary-button compact-button ready-toggle" : "primary-button compact-button ready-toggle"}
-                            onClick={() => sendReady(!localPlayer.isReady)}
-                          >
-                            {localPlayer.isReady ? "준비 해제" : "준비 완료"}
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                    <div className="player-list">
-                      {roomSnapshot.players.map((player) => (
-                        <article key={player.renderKey} className="player-card">
-                          <div className="player-copy">
-                            <strong className="player-name name-with-avatar">
-                              <CharacterArt className="player-avatar" skinId={player.skinId} size={42} alt={getSkinMeta(player.skinId).label} />
-                              <span>{player.name}</span>
-                            </strong>
-                            <div className="player-meta">
-                              <span className="player-role">
-                                {getSkinMeta(player.skinId).label} · {player.isHost ? "방장" : "참가자"}
-                              </span>
-                              <span className="player-loadout">
-                                {getTrailMeta(player.trailId).emoji} {getTrailMeta(player.trailId).label}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="player-actions">
-                            <span className={player.isReady ? "progress-pill progress-pill-ready" : "progress-pill"}>
-                              {player.isReady ? "준비됨" : "대기중"}
-                            </span>
-                            {localPlayer?.isHost && !player.isHost ? (
-                              <button
-                                type="button"
-                                className="icon-button"
-                                onClick={() => kickPlayer(player.sessionId)}
-                              >
-                                내보내기
-                              </button>
-                            ) : null}
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-
-                  {localPlayer ? (
-                    <div className="panel inset">
-                      <div className="section-copy">
-                        <p className="panel-title">출전 미리보기</p>
-                        <p>지금 장착한 스킨과 트레일이 레이스 씬에 이렇게 반영됩니다.</p>
-                      </div>
-                      <article className="loadout-preview-card">
-                        <div className="loadout-preview-art">
-                          <CharacterArt
-                            className="loadout-preview-avatar"
-                            skinId={profile.equippedSkin}
-                            size={112}
-                            alt={getSkinMeta(profile.equippedSkin).label}
-                          />
-                          <div className="loadout-preview-trail">
-                            <span style={{ backgroundColor: `#${getTrailMeta(profile.equippedTrail).color.toString(16).padStart(6, "0")}` }} />
-                            <span style={{ backgroundColor: `#${getTrailMeta(profile.equippedTrail).color.toString(16).padStart(6, "0")}` }} />
-                            <span style={{ backgroundColor: `#${getTrailMeta(profile.equippedTrail).color.toString(16).padStart(6, "0")}` }} />
-                          </div>
-                        </div>
-                        <div className="player-meta">
-                          <span className="player-role">{getSkinMeta(profile.equippedSkin).label}</span>
-                          <span className="player-loadout">
-                            {getTrailMeta(profile.equippedTrail).emoji} {getTrailMeta(profile.equippedTrail).label}
-                          </span>
-                        </div>
-                      </article>
-                    </div>
-                  ) : null}
-                </>
-              ) : null}
-
-              {roomSnapshot.phase === "countdown" ? (
-                <section className="countdown-stage">
-                  <p className="countdown-label">출발 준비 완료</p>
-                  <strong className="countdown-number">{countdownLabel}</strong>
-                  <p className="countdown-copy">잠시 후 레이스가 시작됩니다. 양손 엄지를 버튼 위에 올려두세요.</p>
-                  <div className="mini-lanes">
-                    {roomSnapshot.players.map((player) => (
-                      <article key={player.renderKey} className="mini-lane-card">
-                        <div className="mini-lane-copy">
-                          <strong className="name-with-avatar">
-                            <CharacterArt className="mini-avatar" skinId={player.skinId} size={28} alt={getSkinMeta(player.skinId).label} />
-                            <span>{player.name}</span>
-                          </strong>
-                          <span>
-                            {getSkinMeta(player.skinId).badge} · {getTrailMeta(player.trailId).emoji} {getTrailMeta(player.trailId).label}
-                          </span>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              {roomSnapshot.phase === "results" ? (
-                <section className="results-stage">
-                  <p className="panel-title">최종 순위</p>
-                  <div className="winner-banner">
-                    <span>Winner</span>
-                    <strong className="name-with-avatar">
-                      {winner ? (
-                        <>
-                          <CharacterArt className="winner-avatar" skinId={winner.skinId} size={52} alt={getSkinMeta(winner.skinId).label} />
-                          <span>{winner.name}</span>
-                        </>
-                      ) : (
-                        <span>집계 중</span>
-                      )}
-                    </strong>
-                  </div>
-                  {localPlayer ? (
-                    <div className="reward-banner">
-                      <span>이번 경기 보상</span>
-                      <strong>+{getRaceReward(localPlayer.place)} 코인</strong>
-                    </div>
-                  ) : null}
-                  <div className="results-list">
-                    {roomSnapshot.players.map((player) => (
-                      <article key={player.renderKey} className="result-row">
-                        <div className="result-copy">
-                          <strong className="name-with-avatar">
-                            <CharacterArt className="mini-avatar" skinId={player.skinId} size={28} alt={getSkinMeta(player.skinId).label} />
-                            <span>{player.place}위 · {player.name}</span>
-                          </strong>
-                          <p>
-                            {getSkinMeta(player.skinId).label} · {getTrailMeta(player.trailId).emoji} {getTrailMeta(player.trailId).label}
-                          </p>
-                        </div>
-                        <span className="progress-pill">{player.progress.toFixed(0)}m</span>
-                      </article>
-                    ))}
-                  </div>
-                  {localPlayer ? (
-                    <button
-                      type="button"
-                      className="primary-button"
-                      onClick={() => sendReady(true)}
-                    >
-                      다음 경기 바로 준비
-                    </button>
-                  ) : null}
-                </section>
-              ) : null}
-            </section>
-
-            {isCustomizerOpen ? (
-              <section className="modal-shell" aria-label="커스터마이즈">
-                <button type="button" className="modal-backdrop" aria-label="닫기" onClick={closeCustomizer} />
-                <div className="modal-panel">
-                  <div className="modal-head">
-                    <div className="section-copy">
-                      <p className="panel-title">커스터마이즈</p>
-                      <p>스킨과 트레일을 한 곳에서 구매하고 바로 출전 세팅에 반영하세요.</p>
-                    </div>
-                    <button type="button" className="ghost-button compact-button" onClick={closeCustomizer}>
-                      닫기
-                    </button>
-                  </div>
-
-                  <div className="modal-tab-row">
-                    <button
-                      type="button"
-                      className={customizingTab === "skins" ? "choice-meta modal-tab active" : "choice-meta modal-tab"}
-                      onClick={() => setCustomizingTab("skins")}
-                    >
-                      스킨
-                    </button>
-                    <button
-                      type="button"
-                      className={customizingTab === "trails" ? "choice-meta modal-tab active" : "choice-meta modal-tab"}
-                      onClick={() => setCustomizingTab("trails")}
-                    >
-                      트레일
-                    </button>
-                  </div>
-
-                  <div className="modal-body">
-                    {customizingTab === "skins" ? (
-                      <div className="cosmetic-list">
-                        {selectedCharacterSkins.map((skin) => {
-                          const unlocked = profile.unlockedSkins.includes(skin.id);
-                          const equipped = profile.equippedSkin === skin.id;
-
-                          return (
-                            <button
-                              key={skin.id}
-                              type="button"
-                              className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
-                              onClick={() => unlockOrEquipSkin(skin.id)}
-                            >
-                              <div className="cosmetic-copy cosmetic-copy-with-thumb">
-                                <CharacterArt className="cosmetic-thumb" skinId={skin.id} size={52} alt={skin.label} />
-                                <div>
-                                  <strong>
-                                    {skin.label} <span className="cosmetic-inline-badge">{skin.badge}</span>
-                                  </strong>
-                                  <p>{unlocked ? skin.subtitle : `${skin.price} 코인으로 ${skin.subtitle} 해금`}</p>
-                                </div>
-                              </div>
-                              <span className="progress-pill">
-                                {equipped ? "출전 중" : unlocked ? "장착" : `${skin.price}C`}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : null}
-
-                    {customizingTab === "trails" ? (
-                      <div className="cosmetic-list">
-                        {TRAILS.map((trail) => {
-                          const unlocked = profile.unlockedTrails.includes(trail.id);
-                          const equipped = profile.equippedTrail === trail.id;
-
-                          return (
-                            <button
-                              key={trail.id}
-                              type="button"
-                              className={equipped ? "cosmetic-card selected" : "cosmetic-card"}
-                              onClick={() => unlockOrEquipTrail(trail.id)}
-                            >
-                              <div className="cosmetic-copy">
-                                <strong>
-                                  {trail.emoji} {trail.label}
-                                </strong>
-                                <p>{unlocked ? "즉시 장착 가능" : `${trail.price} 코인으로 해금`}</p>
-                              </div>
-                              <span className="progress-pill">
-                                {equipped ? "장착 중" : unlocked ? "장착" : `${trail.price}C`}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </section>
-            ) : null}
-          </>
-        )}
+        ) : null}
 
         <footer className="footer-note" aria-live="polite">
           <span>{toast || "순위에 따라 코인을 얻고, 새로운 코스튬과 트레일을 해금할 수 있습니다."}</span>

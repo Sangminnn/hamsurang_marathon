@@ -12,6 +12,7 @@ type RacePlayer = {
   headingDeg: number;
   lateralOffset: number;
   place: number;
+  turnDirection: number;
   isLocal: boolean;
 };
 
@@ -54,6 +55,7 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
 
       class MarathonScene extends Phaser.Scene {
         private current: SceneSnapshot = { players: [] };
+        private ready = false;
 
         preload() {
           const imageEntries = new Map<string, string>();
@@ -71,52 +73,105 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
 
         refresh(snapshot: SceneSnapshot) {
           this.current = snapshot;
-          this.renderSnapshot();
+          if (this.ready) {
+            this.renderSnapshot();
+          }
         }
 
         create() {
           this.cameras.main.setBackgroundColor("#eff8f2");
+
+          SKINS.forEach(({ id: skinId }) => {
+            const art = getSkinMeta(skinId).art;
+            if (art.kind === "sheet") {
+              try {
+                const texture = this.textures.get(art.imagePath);
+                if (texture && !texture.has(skinId)) {
+                  texture.add(skinId, 0, art.crop.x, art.crop.y, art.crop.width, art.crop.height);
+                }
+              } catch { /* skip */ }
+            }
+          });
+
+          this.ready = true;
           this.renderSnapshot();
         }
 
-        private drawArt(art: ArtSource, x: number, y: number, size: number, tint?: number) {
-          const textureKey = art.kind === "image" ? art.imagePath : art.imagePath;
-          const image = this.add.image(x, y, textureKey);
+        private drawArt(art: ArtSource, x: number, y: number, size: number, skinId: string, tint?: number) {
+          let image: Phaser.GameObjects.Image;
+
           if (art.kind === "sheet") {
-            image.setCrop(art.crop.x, art.crop.y, art.crop.width, art.crop.height);
+            const texture = this.textures.get(art.imagePath);
+            if (texture && texture.has(skinId)) {
+              image = this.add.image(x, y, art.imagePath, skinId);
+              const fitScale = size / Math.max(art.crop.width, art.crop.height);
+              image.setDisplaySize(art.crop.width * fitScale, art.crop.height * fitScale);
+            } else {
+              image = this.add.image(x, y, art.imagePath);
+              image.setCrop(art.crop.x, art.crop.y, art.crop.width, art.crop.height);
+              image.setDisplaySize(size, size);
+            }
+          } else {
+            image = this.add.image(x, y, art.imagePath);
+            image.setDisplaySize(size, size);
           }
-          image.setDisplaySize(size, size);
+
           if (tint && tint !== 0xffffff) {
             image.setTint(tint);
           }
           return image;
         }
 
-        private drawSteerArrow(x: number, y: number, headingDeg: number, color: number) {
+        private drawSteerArrow(cx: number, cy: number, headingDeg: number, color: number, radius: number, turnDir: number) {
           const graphics = this.add.graphics();
-          const curveStrength = Math.max(-1, Math.min(1, headingDeg / 34));
-          const arcWidth = 18 + Math.abs(curveStrength) * 12;
-          const arcHeight = 14 + Math.abs(curveStrength) * 6;
-          const direction = curveStrength >= 0 ? 1 : -1;
-          const startX = x - arcWidth * 0.5 * direction;
-          const controlX = x + arcWidth * 0.22 * direction;
-          const endX = x + arcWidth * 0.5 * direction;
-          const endY = y - arcHeight * 0.2;
-          const arrowPath = new Phaser.Curves.QuadraticBezier(
-            new Phaser.Math.Vector2(startX, y),
-            new Phaser.Math.Vector2(controlX, y - arcHeight),
-            new Phaser.Math.Vector2(endX, endY),
-          );
+          const r = radius * 0.58;
+          const headRad = (headingDeg * Math.PI) / 180;
 
-          graphics.lineStyle(2, color, 0.96);
-          graphics.strokePoints(arrowPath.getPoints(14));
-          graphics.fillStyle(color, 0.96);
+          // Curved arc: start behind heading, end ahead in turn direction
+          const tailOffset = Math.PI * 0.15;
+          const tipOffset = Math.PI * 0.05;
+          const startAngle = headRad - tailOffset * turnDir;
+          const endAngle = headRad + tipOffset * turnDir;
+          const midAngle = (startAngle + endAngle) / 2;
+
+          const sx = cx + Math.cos(startAngle) * r;
+          const sy = cy + Math.sin(startAngle) * r;
+          const ex = cx + Math.cos(endAngle) * r;
+          const ey = cy + Math.sin(endAngle) * r;
+
+          // Control point bulges outward for the curve
+          const bulge = 1.45;
+          const controlX = cx + Math.cos(midAngle) * r * bulge;
+          const controlY = cy + Math.sin(midAngle) * r * bulge;
+
+          const pts = new Phaser.Curves.QuadraticBezier(
+            new Phaser.Math.Vector2(sx, sy),
+            new Phaser.Math.Vector2(controlX, controlY),
+            new Phaser.Math.Vector2(ex, ey),
+          ).getPoints(16);
+
+          graphics.lineStyle(2.5, color, 0.85);
+          graphics.strokePoints(pts);
+
+          // Arrowhead at the END of the curve, aligned to incoming tangent
+          const last = pts[pts.length - 1];
+          const secondLast = pts[pts.length - 2];
+          const tangentAngle = Math.atan2(last.y - secondLast.y, last.x - secondLast.x);
+
+          const chevronSize = 5;
+          const chevronSpread = 0.5;
+          graphics.lineStyle(2.5, color, 0.9);
           graphics.beginPath();
-          graphics.moveTo(endX, endY);
-          graphics.lineTo(endX - 6 * direction, endY - 4);
-          graphics.lineTo(endX - 6 * direction, endY + 4);
-          graphics.closePath();
-          graphics.fillPath();
+          graphics.moveTo(
+            last.x + Math.cos(tangentAngle + Math.PI - chevronSpread) * chevronSize,
+            last.y + Math.sin(tangentAngle + Math.PI - chevronSpread) * chevronSize,
+          );
+          graphics.lineTo(last.x, last.y);
+          graphics.lineTo(
+            last.x + Math.cos(tangentAngle + Math.PI + chevronSpread) * chevronSize,
+            last.y + Math.sin(tangentAngle + Math.PI + chevronSpread) * chevronSize,
+          );
+          graphics.strokePath();
         }
 
         private renderSnapshot() {
@@ -139,8 +194,8 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
           const startX = trackLeft + Math.max(24, trackWidth * 0.08);
           const finishX = trackRight - Math.max(24, trackWidth * 0.1);
           const runnerSize = Math.max(
-            isMobile ? 32 : 40,
-            Math.min(isMobile ? 58 : 76, laneHeight * (isMobile ? 0.5 : 0.58)),
+            isMobile ? 20 : 26,
+            Math.min(isMobile ? 36 : 46, laneHeight * (isMobile ? 0.32 : 0.36)),
           );
           const labelFontSize = isMobile ? "11px" : "13px";
 
@@ -184,37 +239,42 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
             const trailMeta = getTrailMeta(player.trailId);
             const skinMeta = getSkinMeta(player.skinId);
             const laneCenterY = trackTop + laneHeight * index + laneHeight / 2;
-            const laneDriftLimit = Math.max(10, laneHeight * 0.26);
+            const pixelsPerProgress = (finishX - startX) / 100;
+            const laneDriftLimit = pixelsPerProgress * (22 / 4.8);
             const centerY = laneCenterY + player.lateralOffset * laneDriftLimit;
             const x = startX + ((finishX - startX - runnerSize * 0.16) * player.progress) / 100;
             const shadowWidth = runnerSize * 0.92;
             const shadowHeight = Math.max(8, runnerSize * 0.22);
-            const tagTextValue = `${player.place || index + 1}위 ${player.name}`;
-            const tagWidth = Math.max(isMobile ? 74 : 90, tagTextValue.length * (isMobile ? 7.2 : 8.4) + 22);
-
             this.add.ellipse(x, centerY + runnerSize * 0.42, shadowWidth, shadowHeight, 0x7f654a, 0.14);
             this.add.circle(x - runnerSize * 0.82, centerY + runnerSize * 0.14, Math.max(2, runnerSize * 0.12), trailMeta.color, 0.34);
             this.add.circle(x - runnerSize * 1.08, centerY + runnerSize * 0.16, Math.max(2, runnerSize * 0.08), trailMeta.color, 0.22);
             this.add.circle(x - runnerSize * 1.32, centerY + runnerSize * 0.18, Math.max(1, runnerSize * 0.05), trailMeta.color, 0.14);
-            this.drawArt(skinMeta.art, x, centerY, runnerSize, skinMeta.tint)
-              .setRotation((player.headingDeg * Math.PI) / 1800);
+
+            if (player.isLocal) {
+              this.add.ellipse(x, centerY + runnerSize * 0.44, runnerSize * 1.2, runnerSize * 0.32, 0x4fad83, 0.28);
+            }
+
+            this.drawArt(skinMeta.art, x, centerY, runnerSize, player.skinId, skinMeta.tint);
+
+            if (player.isLocal) {
+              const markerY = centerY - runnerSize * 0.62;
+              const g = this.add.graphics();
+              g.fillStyle(0x4fad83, 0.92);
+              g.beginPath();
+              g.moveTo(x, markerY + 5);
+              g.lineTo(x - 4, markerY);
+              g.lineTo(x + 4, markerY);
+              g.closePath();
+              g.fillPath();
+            }
             this.drawSteerArrow(
               x,
-              centerY - runnerSize * 0.92,
+              centerY,
               player.headingDeg,
               player.isLocal ? 0x1d5a46 : 0x608277,
+              runnerSize,
+              player.turnDirection,
             );
-
-            const tag = this.add.container(x, centerY - runnerSize * 1.26);
-            const tagBg = this.add.rectangle(0, 0, tagWidth, isMobile ? 22 : 26, player.isLocal ? 0x224c3d : 0xffffff, player.isLocal ? 0.96 : 0.92)
-              .setStrokeStyle(1, player.isLocal ? 0x4fad83 : 0xd6e5db, 1);
-            const tagText = this.add.text(0, 0, tagTextValue, {
-              color: player.isLocal ? "#ffffff" : "#17382e",
-              fontFamily: "Pretendard Variable, sans-serif",
-              fontSize: isMobile ? "10px" : "12px",
-              fontStyle: "700",
-            }).setOrigin(0.5, 0.5);
-            tag.add([tagBg, tagText]);
           });
         }
       }
@@ -233,10 +293,12 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
         parent: hostRef.current,
         transparent: true,
         scene,
-        scale: { mode: Phaser.Scale.NONE, autoCenter: Phaser.Scale.CENTER_BOTH },
+        scale: { mode: Phaser.Scale.NONE, autoCenter: Phaser.Scale.NO_CENTER },
       });
 
-      sceneRef.current.refresh({ players });
+      // Track the last applied size so we only resize when truly needed
+      let lastAppliedWidth = initialSize.width;
+      let lastAppliedHeight = initialSize.height;
 
       resizeObserver = new ResizeObserver(() => {
         if (!game?.scale || !sceneRef.current) {
@@ -244,6 +306,15 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
         }
 
         const nextSize = getSceneSize();
+
+        // Skip if the computed size hasn't actually changed
+        if (nextSize.width === lastAppliedWidth && nextSize.height === lastAppliedHeight) {
+          return;
+        }
+
+        lastAppliedWidth = nextSize.width;
+        lastAppliedHeight = nextSize.height;
+
         game.scale.resize(nextSize.width, nextSize.height);
         sceneRef.current.refresh({ players: playersRef.current });
       });

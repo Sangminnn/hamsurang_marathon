@@ -16,4 +16,5 @@ export class PlayerState extends Schema {
   @type("number") lateralOffset = 0;
   @type("number") finishMs = 0;
   @type("number") place = 0;
+  @type("number") turnDirection = -1;
 }
