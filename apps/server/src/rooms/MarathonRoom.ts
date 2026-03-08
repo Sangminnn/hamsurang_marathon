@@ -28,10 +28,10 @@ const MAX_PROGRESS = 100;
 const MIN_INPUT_INTERVAL_MS = 80;
 const MAX_NICKNAME_LENGTH = 12;
 const RACE_TICK_MS = 16;
-const LATERAL_LIMIT = 50;
+const LATERAL_LIMIT = 4;
 const BASE_FORWARD_SPEED = 7.3;
 const TURN_SPEED_DEG_PER_SECOND = 220;
-const LATERAL_SPEED = 1.6;
+const LATERAL_SPEED = 1.3;
 
 export class MarathonRoom extends Room<MarathonRoomState> {
   maxClients = MAX_PLAYERS;

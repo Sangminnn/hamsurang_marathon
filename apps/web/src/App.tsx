@@ -1063,9 +1063,17 @@ export function App() {
         <section className="room-page">
           <header className="room-page-header">
             <div className="room-page-copy">
-              <p className="eyebrow">Race Lobby</p>
-              <h1>{roomSnapshot.roomId}</h1>
-              <p>참가자를 모으고 세팅을 마치면 바로 다음 레이스를 시작할 수 있습니다.</p>
+              <h1>레이스 로비</h1>
+              <button
+                type="button"
+                className="room-code-badge"
+                onClick={() => {
+                  navigator.clipboard.writeText(roomSnapshot.roomId);
+                  sonnerToast.success("방 코드가 복사되었습니다");
+                }}
+              >
+                {roomSnapshot.roomId}
+              </button>
             </div>
             <button type="button" className="ghost-button" onClick={leaveRoom}>
               나가기
@@ -1074,10 +1082,7 @@ export function App() {
 
           <section className="room-page-stack">
             <div className="panel inset">
-              <div className="section-copy">
-                <p className="panel-title">게임 모드</p>
-                <p>방장이 경기 방식을 정하면, 참가자 준비 완료와 함께 자동으로 카운트다운이 시작됩니다.</p>
-              </div>
+              <p className="panel-title">게임 모드</p>
               <div className="mode-grid">
                 {GAME_MODE_OPTIONS.map((option) => (
                   <button
@@ -1100,10 +1105,7 @@ export function App() {
             </div>
 
             <div className="panel inset">
-              <div className="section-copy">
-                <p className="panel-title">내 출전 세팅</p>
-                <p>지금 고른 스킨과 트레일이 레이스 시작과 동시에 그대로 반영됩니다.</p>
-              </div>
+              <p className="panel-title">내 출전 세팅</p>
               <div className="customizer-summary-grid">
                 <button type="button" className="customizer-entry" onClick={() => openCustomizer("skins")}>
                   <div className="customizer-entry-copy">
@@ -1127,10 +1129,7 @@ export function App() {
 
             <div className="panel inset">
               <div className="section-head">
-                <div className="section-copy">
-                  <p className="panel-title">참가자 현황</p>
-                  <p>모든 참가자가 준비를 마치면 레이스가 바로 시작됩니다.</p>
-                </div>
+                <p className="panel-title">참가자 현황 ({roomSnapshot.players.length}명)</p>
                 <div className="lobby-cta-group">
                   {localPlayer?.isHost && roomSnapshot.players.length === 1 ? (
                     <button
@@ -1327,9 +1326,8 @@ export function App() {
         <section className="stage-page">
           <header className="stage-page-header">
             <div className="stage-page-copy">
-              <p className="eyebrow">Results</p>
-              <h1>{roomSnapshot.roomId}</h1>
-              <p>이번 경기 결과와 보상을 확인한 뒤 바로 다음 레이스를 준비할 수 있습니다.</p>
+              <h1>경기 결과</h1>
+              <span className="room-code-badge" title="방 번호">방 {roomSnapshot.roomId}</span>
             </div>
           </header>
 
@@ -1337,7 +1335,7 @@ export function App() {
             <section className="results-stage">
               <p className="panel-title">최종 순위</p>
               <div className="winner-banner">
-                <span>Winner</span>
+                <span>우승</span>
                 <strong className="name-with-avatar">
                   {winner ? (
                     <>
@@ -1364,10 +1362,10 @@ export function App() {
                         <span>{player.place}위 · {player.name}</span>
                       </strong>
                       <p>
-                        {getSkinMeta(player.skinId).label} · {getTrailMeta(player.trailId).emoji} {getTrailMeta(player.trailId).label}
+                        장비: {getSkinMeta(player.skinId).label} · {getTrailMeta(player.trailId).emoji} {getTrailMeta(player.trailId).label}
                       </p>
                     </div>
-                    <span className="progress-pill">{player.progress.toFixed(0)}m</span>
+                    <span className="progress-pill">완주 거리 {player.progress.toFixed(0)}m</span>
                   </article>
                 ))}
               </div>
@@ -1391,37 +1389,26 @@ export function App() {
     <main className="app-shell">
       <section className="phone-frame">
         <header className="hero">
-          <p className="eyebrow">Live Race Lobby</p>
           <h1>함수랑 마라톤</h1>
-          <p className="hero-copy">
-            같은 방에 모인 플레이어가 준비를 마치면 바로 시작되는 실시간 탭 레이스입니다.
-            30초 동안 달려 순위를 겨루고, 보상 코인으로 캐릭터를 꾸민 뒤 다음 경기에 다시 도전하세요.
-          </p>
+          <p className="hero-tagline">30초 실시간 탭 레이스</p>
         </header>
 
         {!roomSnapshot ? (
           <section className="panel stack">
-            <div className="panel inset intro-panel">
-              <div className="section-copy">
-                <p className="panel-title">플레이 흐름</p>
-                <p>닉네임과 캐릭터를 고른 뒤 방을 만들거나 코드로 입장하면 바로 레이스를 준비할 수 있습니다.</p>
+            <div className="flow-steps">
+              <div className="flow-step">
+                <span className="flow-step-num">1</span>
+                <span className="flow-step-text">방 생성 · 코드 입장</span>
               </div>
-              <div className="info-grid">
-                <article className="info-card">
-                  <span className="info-card-label">입장 방식</span>
-                  <strong>방 생성 또는 코드 입장</strong>
-                  <p>룸 코드를 공유해 같은 로비에 빠르게 모입니다.</p>
-                </article>
-                <article className="info-card">
-                  <span className="info-card-label">경기 규칙</span>
-                  <strong>30초 스프린트</strong>
-                  <p>좌우 버튼을 번갈아 눌러 가장 멀리 달리면 승리합니다.</p>
-                </article>
-                <article className="info-card">
-                  <span className="info-card-label">성장 요소</span>
-                  <strong>코인으로 스킨 해금</strong>
-                  <p>순위 보상으로 캐릭터 스킨과 트레일을 열고 바로 다음 레이스에 반영할 수 있습니다.</p>
-                </article>
+              <span className="flow-arrow">→</span>
+              <div className="flow-step">
+                <span className="flow-step-num">2</span>
+                <span className="flow-step-text">30초 레이스</span>
+              </div>
+              <span className="flow-arrow">→</span>
+              <div className="flow-step">
+                <span className="flow-step-num">3</span>
+                <span className="flow-step-text">코인으로 스킨 해금</span>
               </div>
             </div>
 

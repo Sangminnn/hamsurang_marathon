@@ -245,15 +245,25 @@ export function RaceTrackPhaser({ players }: { players: RacePlayer[] }) {
             const skinMeta = getSkinMeta(player.skinId);
             const laneCenterY = trackTop + laneHeight * index + laneHeight / 2;
             const pixelsPerProgress = (finishX - startX) / 100;
-            const laneDriftLimit = pixelsPerProgress * (7.3 / 1.6);
-            const centerY = laneCenterY + player.lateralOffset * laneDriftLimit;
+            const laneDriftLimit = pixelsPerProgress * (7.3 / 1.3);
+            const rawCenterY = laneCenterY + player.lateralOffset * laneDriftLimit;
+            const centerY = Math.max(trackTop + runnerSize * 0.6, Math.min(trackBottom - runnerSize * 0.6, rawCenterY));
             const x = startX + ((finishX - startX - runnerSize * 0.16) * player.progress) / 100;
             const shadowWidth = runnerSize * 0.92;
             const shadowHeight = Math.max(8, runnerSize * 0.22);
             this.add.ellipse(x, centerY + runnerSize * 0.42, shadowWidth, shadowHeight, 0x7f654a, 0.14);
-            this.add.circle(x - runnerSize * 0.82, centerY + runnerSize * 0.14, Math.max(2, runnerSize * 0.12), trailMeta.color, 0.34);
-            this.add.circle(x - runnerSize * 1.08, centerY + runnerSize * 0.16, Math.max(2, runnerSize * 0.08), trailMeta.color, 0.22);
-            this.add.circle(x - runnerSize * 1.32, centerY + runnerSize * 0.18, Math.max(1, runnerSize * 0.05), trailMeta.color, 0.14);
+            const emojiSize = Math.max(10, Math.round(runnerSize * 0.52));
+            const trailPositions = [
+              { dx: -0.62, dy: 0.08, scale: 1.0, alpha: 0.7 },
+              { dx: -1.00, dy: 0.12, scale: 0.78, alpha: 0.5 },
+              { dx: -1.36, dy: 0.14, scale: 0.56, alpha: 0.3 },
+            ];
+            for (const tp of trailPositions) {
+              const fontSize = Math.round(emojiSize * tp.scale);
+              this.add.text(x + runnerSize * tp.dx, centerY + runnerSize * tp.dy, trailMeta.emoji, {
+                fontSize: `${fontSize}px`,
+              }).setOrigin(0.5, 0.5).setAlpha(tp.alpha);
+            }
 
             if (player.isLocal) {
               this.add.ellipse(x, centerY + runnerSize * 0.44, runnerSize * 1.2, runnerSize * 0.32, 0x4fad83, 0.28);

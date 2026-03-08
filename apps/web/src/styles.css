@@ -75,18 +75,57 @@ button:disabled {
   gap: 8px;
 }
 
+.room-page-header,
+.stage-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .room-page-copy,
 .stage-page-copy {
-  display: grid;
-  gap: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .room-page-copy h1,
 .stage-page-copy h1 {
-  margin: 2px 0 0;
-  font-size: clamp(1.5rem, 6vw, 2.2rem);
-  line-height: 1;
-  letter-spacing: -0.03em;
+  margin: 0;
+  font-size: clamp(1.2rem, 5vw, 1.6rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.room-code-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: rgba(79, 139, 114, 0.12);
+  border: 1px solid rgba(79, 139, 114, 0.22);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: "SF Mono", "Cascadia Code", monospace;
+  color: #3d7a5f;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.room-code-badge:hover {
+  background: rgba(79, 139, 114, 0.22);
+}
+
+.room-code-badge:active {
+  background: rgba(79, 139, 114, 0.32);
+}
+
+.room-page-header .ghost-button {
+  font-size: 0.82rem;
+  padding: 5px 12px;
+  min-height: unset;
 }
 
 .room-page-copy p:last-child,
@@ -369,15 +408,82 @@ button:disabled {
 
 .hero {
   display: grid;
-  gap: 6px;
-  padding: 14px 8px 4px;
+  gap: 4px;
+  padding: 10px 8px 2px;
 }
 
 .hero h1 {
-  margin: 2px 0 0;
-  font-size: clamp(2rem, 10vw, 2.8rem);
-  line-height: 1;
-  letter-spacing: -0.04em;
+  margin: 0;
+  font-size: clamp(1.6rem, 8vw, 2.2rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.hero-tagline {
+  margin: 0;
+  color: #4f8b72;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.flow-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(103, 145, 123, 0.18);
+  border-radius: 16px;
+}
+
+.flow-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flow-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4f8b72;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.flow-step-text {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2d5f4b;
+  white-space: nowrap;
+}
+
+.flow-arrow {
+  color: #9cc2ae;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 420px) {
+  .flow-steps {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 16px;
+  }
+
+  .flow-arrow {
+    transform: rotate(90deg);
+    font-size: 0.7rem;
+    margin-left: 6px;
+  }
 }
 
 .hero-copy {
@@ -386,16 +492,6 @@ button:disabled {
   color: #49675f;
   font-size: 0.94rem;
   line-height: 1.55;
-}
-
-.eyebrow {
-  margin: 0;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #4f8b72;
-  line-height: 1.3;
 }
 
 .panel {
@@ -482,7 +578,7 @@ button:disabled {
 
 .field span,
 .panel-title {
-  margin: 0;
+  margin: 0 0 8px;
   font-size: 0.92rem;
   font-weight: 700;
   color: #35554c;
@@ -1531,7 +1627,7 @@ button:disabled {
   }
 
   .hero {
-    padding: 22px 24px 8px;
+    padding: 16px 24px 4px;
   }
 
   .hero h1 {
